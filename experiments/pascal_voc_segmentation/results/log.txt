@@ -1,0 +1,10 @@
+2020-07-31 00:40:38,015 pascal_voc_segmentation INFO: -------------------------
+2020-07-31 00:40:38,015 pascal_voc_segmentation INFO: --LAUNCHING EXPERIMENTS--
+2020-07-31 00:40:38,015 pascal_voc_segmentation INFO: -------------------------
+2020-07-31 00:40:38,017 pascal_voc_segmentation INFO: Setting up datasets...
+2020-07-31 00:40:38,117 pascal_voc_segmentation INFO: Dataset initial train size : 1464
+2020-07-31 00:40:38,118 pascal_voc_segmentation INFO: Dataset used train size : 5000
+2020-07-31 00:40:38,118 pascal_voc_segmentation INFO: Dataset test size : 1449
+2020-07-31 00:40:38,118 pascal_voc_segmentation INFO: Setting up models...
+2020-07-31 00:40:38,118 pascal_voc_segmentation INFO: Training for 5 steps, querying 1000 assets per step.
+2020-07-31 00:40:38,118 pascal_voc_segmentation INFO: Step number #1

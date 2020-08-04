@@ -1,0 +1,35 @@
+Metadata-Version: 2.1
+Name: al
+Version: 0.1.1
+Summary: Experiments around active learning
+Home-page: https://github.com/mDuval1/active-learning
+Author: Maxime Duval
+Author-email: maxime@kili-technology.com
+License: MIT
+Description: # active-learning
+        
+        This repository contains code developed for [Kili Technology](https://kili-technology.com/), to investigate the use of machine learning to accelerate the training pipeline. This library mainly considers active learning.
+        
+        
+        ## Summary
+        
+        The repository is divided as follows : 
+        
+        - In `active-learning`, you can find a library containing models, dataset, and algorithms used for active learning.
+        - In `experiments`, you can find the code for different experiments ran.
+        - In `notebooks`, you can find notebooks that show how the library works.
+        
+        ## Get started
+        
+        ```
+        git clone https://github.com/mDuval1/active-learning
+        cd active-learning
+        pip install .
+        ```
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown

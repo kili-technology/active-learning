@@ -1,0 +1,8 @@
+INPUT:
+  IMAGE_SIZE: 320
+  CHANNELS: 3
+MODEL:
+  BILINEAR: True
+DATASETS:
+  TRAIN: ("voc_2012_trainval", )
+  TEST: ("voc_2007_test", )
