@@ -1,5 +1,6 @@
 .ipynb_checkpoints/
 al.egg-info
+*.cpython-37.pyc
 dist
 build
 *.weights
@@ -9,3 +10,4 @@ build
 log.txt
 *.pickle
 __pycache__/
+*.code-workspace

@@ -7,7 +7,7 @@ from al.dataset.mnist import MnistDataset
 from al.dataset.cifar import Cifar100Dataset
 
 
-def set_up_mnist(config, output_dir, logger):
+def set_up_mnist(config, output_dir, logger, device=None):
     train_size, val_size, init_size = config['dataset']['train_size'], config['dataset']['val_size'], config['active_learning']['init_size']
     index_validation = np.arange(val_size)
     index_train = np.arange(val_size, train_size+val_size)
@@ -23,7 +23,7 @@ def set_up_mnist(config, output_dir, logger):
     return dataset, learner
 
 
-def set_up_cifar(config, output_dir, logger):
+def set_up_cifar(config, output_dir, logger, device=0):
     logger.info('Setting up datasets...')
 
     init_size = config['active_learning']['init_size']
@@ -40,6 +40,9 @@ def set_up_cifar(config, output_dir, logger):
 
     logger.info('Setting up models...')
 
-    model = mobilenet
-    learner = CifarLearner(model, cifar100=True, logger_name=logger_name)
+    if 'mobilenet' in config['experiment']['model']:
+        model = mobilenet_v2(config)
+    elif 'nasnet' in config['experiment']['model']:
+        model = nasnet(config)
+    learner = CifarLearner(model, cifar100=True, logger_name=logger_name, device=device)
     return dataset, learner

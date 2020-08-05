@@ -10,11 +10,12 @@ active_learning:
   score_on_train: True
 train_parameters:
   batch_size: 32
-  iterations: 100
+  iterations: 10
   learning_rate: 0.003
   shuffle: True
   momentum: 0.9
   weight_decay: 0.0005
 dataset:
   train_size: 5000
+  test_size: 1000
 model_type: 'detection'

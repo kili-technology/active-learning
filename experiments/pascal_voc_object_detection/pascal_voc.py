@@ -22,7 +22,7 @@ FOLDER_PATH = os.path.dirname(__file__)
 REPEATS = 2
 
 
-OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(EXPERIMENT_NAME)
+OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(EXPERIMENT_NAME, logging_lvl=10)
 DATASET = 'pascalvoc_detection'
 
 logger.info('-------------------------')

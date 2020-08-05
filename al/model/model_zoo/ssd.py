@@ -1153,7 +1153,10 @@ def get_transforms_semantic(cfg):
     return train_transform, target_transform
 
 def voc_evaluation(dataset, predictions, output_dir, iteration=None):
-    class_names = dataset.class_names
+    voc_dataset = dataset
+    while hasattr(voc_dataset, 'dataset'):
+        voc_dataset = voc_dataset.dataset
+    class_names = voc_dataset.class_names
 
     pred_boxes_list = []
     pred_labels_list = []
@@ -1164,13 +1167,13 @@ def voc_evaluation(dataset, predictions, output_dir, iteration=None):
 
     # for i in range(len(dataset)):
     for i in predictions.keys():
-        image_id, annotation = dataset.get_annotation(i)
+        image_id, annotation = voc_dataset.get_annotation(i)
         gt_boxes, gt_labels, is_difficult = annotation
         gt_boxes_list.append(gt_boxes)
         gt_labels_list.append(gt_labels)
         gt_difficults.append(is_difficult.astype(np.bool))
 
-        img_info = dataset.get_img_info(i)
+        img_info = voc_dataset.get_img_info(i)
         prediction = predictions[i]
         prediction = prediction.resize((img_info['width'], img_info['height'])).numpy()
         boxes, labels, scores = prediction['boxes'], prediction['labels'], prediction['scores']
