@@ -42,10 +42,13 @@ class ActiveTrain():
         self.logger.debug(f'Adding {n} samples to the dataset...')
         unlabeled_dataset = self.dataset.get_unlabeled()
         self.strategy = get_strategy(self.method, logger_name=self.logger_name, labeled_ds=self.dataset.get_labeled(), **self.strategy_params)
-        unlabeled_indices_to_add = self.strategy.return_top_indices(unlabeled_dataset, self.learner, n, log_time=log_time)
-        indices_to_add = [self.dataset.unlabeled_to_all[i] for i in unlabeled_indices_to_add]
-        self.dataset.add_to_labeled(indices_to_add)
-        self.logger.debug(f'Added {n} samples to the dataset.')
+        if len(unlabeled_dataset) > 0:
+            unlabeled_indices_to_add = self.strategy.return_top_indices(unlabeled_dataset, self.learner, n, log_time=log_time)
+            indices_to_add = [self.dataset.unlabeled_to_all[i] for i in unlabeled_indices_to_add]
+            self.dataset.add_to_labeled(indices_to_add)
+        else:
+            indices_to_add = []
+        self.logger.debug(f'Added {len(indices_to_add)} samples to the dataset.')
         self.logger.debug(f'Labeled dataset size : {len(self.dataset.get_labeled())}')
         self.logger.debug(f'Unlabeled dataset size : {len(self.dataset.get_unlabeled())}')
 

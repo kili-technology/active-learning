@@ -22,13 +22,15 @@ class MaskDataset(Dataset):
 
 class ActiveDataset():
 
-    def __init__(self, dataset, n_init=100, output_dir=None):
+    def __init__(self, dataset, n_init=100, output_dir=None, queries_name='queries.txt'):
         self.dataset = dataset
         self.masklabeled = np.array([False for i in range(len(dataset))])
         self.update_labeled_list()
         init_list = list(np.random.permutation(np.arange(len(dataset)))[:n_init])
         self.output_dir = output_dir
-        self.queries_file = os.path.join(output_dir, 'queries.txt')
+        self.queries_file = os.path.join(output_dir, queries_name)
+        if os.path.exists(self.queries_file):
+            os.remove(self.queries_file)
         self.add_to_labeled(init_list)
 
     def _get_initial_dataset(self):

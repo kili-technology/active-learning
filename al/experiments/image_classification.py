@@ -7,30 +7,34 @@ from al.dataset.mnist import MnistDataset
 from al.dataset.cifar import Cifar100Dataset
 
 
-def set_up_mnist(config, output_dir, logger, device=None):
+def set_up_mnist(config, output_dir, logger, device=0, queries_name='queries.txt'):
     train_size, val_size, init_size = config['dataset']['train_size'], config['dataset']['val_size'], config['active_learning']['init_size']
     index_validation = np.arange(val_size)
     index_train = np.arange(val_size, train_size+val_size)
+    logger_name = config['experiment']['logger_name']
     logger.info('Setting up datasets...')
 
-    dataset = MnistDataset(index_train, n_init=init_size, output_dir=output_dir)
+    dataset = MnistDataset(index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name)
     dataset.set_validation_dataset(dataset.get_dataset(index_validation))
 
     logger.info('Setting up models...')
 
-    model = ConvModel()
-    learner = MnistLearner(model)
+    if 'simple_cnn' in config['experiment']['model']:
+        model = ConvModel()
+    elif 'simplenet' in config['experiment']['model']:
+        model = simplenet()
+    learner = MnistLearner(model, logger_name=logger_name, device=device)
     return dataset, learner
 
 
-def set_up_cifar(config, output_dir, logger, device=0):
+def set_up_cifar(config, output_dir, logger, device=0, queries_name='queries.txt'):
     logger.info('Setting up datasets...')
 
     init_size = config['active_learning']['init_size']
     index_train = np.arange(config['dataset']['train_size'])
     logger_name = config['experiment']['logger_name']
 
-    dataset = Cifar100Dataset(index_train, n_init=init_size, output_dir=output_dir)
+    dataset = Cifar100Dataset(index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name)
     test_dataset = dataset._get_initial_dataset(train=False)
     dataset.set_validation_dataset(test_dataset)
 

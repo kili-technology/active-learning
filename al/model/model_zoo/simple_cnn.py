@@ -20,6 +20,4 @@ class ConvModel(nn.Module):
         ])
     
     def forward(self, x):
-        if x.dim() != 4:
-            x = x[:, None, :, :]
         return self.conv(x)

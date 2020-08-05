@@ -8,7 +8,7 @@ from ..model.configs import cfg
 
 
 
-def set_up_pascalvoc_detection(config, output_dir, logger, device=0):
+def set_up_pascalvoc_detection(config, output_dir, logger, device=0, queries_name='queries.txt'):
     logger.info('Setting up datasets...')
     config_file = config['experiment']['config_file']
     model, cfg = get_model_config(config_file, config['model_type'])

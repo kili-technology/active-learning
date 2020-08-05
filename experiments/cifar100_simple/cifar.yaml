@@ -3,6 +3,8 @@ experiment:
     strategies: ['random_sampling', 'margin_sampling']
     # model: 'mobilenet'
     model: 'nasnet'
+    repeats: 5
+    save_results: False
 active_learning:
   assets_per_query: 1000
   n_iter: 5

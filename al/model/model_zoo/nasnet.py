@@ -2,6 +2,7 @@
 [1] Barret Zoph, Vijay Vasudevan, Jonathon Shlens, Quoc V. Le
     Learning Transferable Architectures for Scalable Image Recognition
     https://arxiv.org/abs/1707.07012
+Code from https://github.com/weiaicunzai/pytorch-cifar100
 """
 
 import torch

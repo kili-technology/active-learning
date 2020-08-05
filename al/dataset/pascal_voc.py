@@ -22,11 +22,11 @@ class PascalVOCObjectDataset(ActiveDataset):
                    'motorbike', 'person', 'pottedplant',
                    'sheep', 'sofa', 'train', 'tvmonitor')
 
-    def __init__(self, indices, n_init=100, output_dir=None, train=True, year='2012', cfg=None):
+    def __init__(self, indices, n_init=100, output_dir=None, train=True, year='2012', cfg=None, queries_name='queries.txt'):
         self.data_dir = os.path.join(DATA_ROOT, f'VOCdevkit/VOC{year}')
         self.cfg = cfg
         self.init_dataset = self._get_initial_dataset(train, year)
-        super().__init__(self.get_dataset(indices), n_init=n_init, output_dir=output_dir)
+        super().__init__(self.get_dataset(indices), n_init=n_init, output_dir=output_dir, queries_name=queries_name)
 
 
     def _get_initial_dataset(self, train=True, year='2012'):
