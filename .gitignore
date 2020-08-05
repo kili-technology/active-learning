@@ -1,0 +1,11 @@
+.ipynb_checkpoints/
+al.egg-info
+dist
+build
+*.weights
+*.pt
+*/runs/
+*.pyc
+log.txt
+*.pickle
+__pycache__/

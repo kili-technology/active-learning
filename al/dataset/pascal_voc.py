@@ -38,8 +38,8 @@ class PascalVOCObjectDataset(ActiveDataset):
         if not os.path.exists(self.data_dir):
             torchvision.datasets.VOCDetection(root=DATA_ROOT, year=year, image_set=image_set, download=True)
         split = 'train' if train else 'val'
-        if train: return SmallVOCDataset(self.data_dir, split, transform=transform, target_transform=target_transform, keep_difficult=not train)
-        else: return SmallVOCDataset(self.data_dir, split, transform=transform, target_transform=target_transform, keep_difficult=not train)
+        if train: return VOCDataset(self.data_dir, split, transform=transform, target_transform=target_transform, keep_difficult=not train)
+        else: return VOCDataset(self.data_dir, split, transform=transform, target_transform=target_transform, keep_difficult=not train)
 
     def get_dataset(self, indices):
         return MaskDataset(self.init_dataset, indices)
