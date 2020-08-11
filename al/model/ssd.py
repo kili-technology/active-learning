@@ -1,4 +1,5 @@
 import logging
+import os
 
 import numpy as np
 import tqdm
@@ -8,7 +9,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import BatchSampler, SequentialSampler
 
 from .active_model import ActiveLearner
-from .model_zoo.ssd import *
+from .model_zoo.ssd import BatchCollator, voc_evaluation, coco_evaluation
 from ..helpers.time import timeit
 from ..helpers.samplers import IterationBasedBatchSampler
 
@@ -16,16 +17,17 @@ from ..helpers.samplers import IterationBasedBatchSampler
 
 class SSDLearner(ActiveLearner):
 
-    def __init__(self, model, cfg, logger_name=None, device=0):
+    def __init__(self, model, cfg, logger_name=None, device=0, dataset='voc'):
         super().__init__(device=device)
         self.cfg = cfg
         self.model = model
         self.logger = logging.getLogger(logger_name)
+        self.dataset = dataset
 
     def get_predictions(self, dataset):
         self.model.eval()
         batch_sampler = BatchSampler(
-            sampler=self.get_base_sampler(len(dataset), shuffle=False), batch_size=128, drop_last=False)
+            sampler=self.get_base_sampler(len(dataset), shuffle=False), batch_size=self.val_batch_size, drop_last=False)
         loader = torch.utils.data.DataLoader(
             dataset, batch_sampler=batch_sampler,
             pin_memory=self.cfg.DATA_LOADER.PIN_MEMORY, collate_fn=BatchCollator(is_train=False))
@@ -33,7 +35,6 @@ class SSDLearner(ActiveLearner):
         loader_ids = []
         with torch.no_grad():
             for (images, labels, id_) in tqdm.tqdm(loader, disable=self.logger.level > 15):
-                print('HEEEEEEERE')
                 loader_ids += list(id_.numpy())
                 if self.cuda_available:
                     images = images.cuda()
@@ -99,7 +100,7 @@ class SSDLearner(ActiveLearner):
             loss.backward()
             optimizer.step()
 
-    def score(self, dataset, batch_size=128, *args, **kwargs):
+    def score(self, dataset, batch_size=64, *args, **kwargs):
         self.model.eval()
         results_dict = {}
         batch_sampler = BatchSampler(
@@ -115,4 +116,7 @@ class SSDLearner(ActiveLearner):
                 results_dict.update(
                     {img_id: self.send_container_to_cpu(result) for img_id, result in zip(image_ids, outputs)}
                 )
-        return voc_evaluation(dataset=dataset, predictions=results_dict, output_dir=None, iteration=None)
+        if self.dataset == 'voc':
+            return voc_evaluation(dataset=dataset, predictions=results_dict, output_dir=None, iteration=None)
+        elif self.dataset == 'coco': 
+            return coco_evaluation(dataset=dataset, predictions=results_dict, output_dir=os.path.expanduser('~/data/coco'), iteration=None)

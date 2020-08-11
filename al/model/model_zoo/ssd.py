@@ -3,8 +3,11 @@ From SSD
 """
 
 from __future__ import division
-
-
+import os
+import json
+import datetime
+import tempfile
+import time
 import math
 import sys
 import warnings
@@ -15,6 +18,7 @@ import types
 from collections import defaultdict
 import six
 
+import tqdm
 import numpy as np
 from numpy import random
 import cv2
@@ -24,7 +28,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 
-from .mobilenet import mobilenet_v2
+from .mobilenet import mobilenet_v2_backbone
+from .vgg import vgg
 
 if torchvision.__version__ >= '0.3.0':
     _nms = torchvision.ops.nms
@@ -32,26 +37,35 @@ else:
     warnings.warn('No NMS is available. Please upgrade torchvision to 0.3.0+')
     sys.exit(-1)
 
+MEASURE_TIME = False
 
 class SSDDetector(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg, backbone):
         super().__init__()
         self.cfg = cfg
-        self.backbone = build_backbone(cfg)
+        self.backbone = build_backbone(cfg, backbone)
         self.box_head = SSDBoxHead(cfg)
 
     def forward(self, images, targets=None):
+        if MEASURE_TIME:
+            t = time.time()
         features = self.backbone(images)
+        if MEASURE_TIME:
+            t1 = time.time()
+            print(f'Backbone took {(t1 - t):.2f}s')
         detections, detector_losses = self.box_head(features, targets)
+        if MEASURE_TIME:
+            print(f'Detector {(time.time() - t1):.2f}s')
         if self.training:
             return detector_losses
         return detections
 
 
-def build_backbone(cfg):
-    model_name = cfg.MODEL.BACKBONE.NAME
-    if cfg.MODEL.BACKBONE.NAME == 'mobilenet_v2':
-        return mobilenet_v2(cfg)
+def build_backbone(cfg, backbone):
+    if backbone == 'mobilenet_v2':
+        return mobilenet_v2_backbone(cfg)
+    elif backbone == 'vgg':
+        return vgg(cfg)
 
 class MultiBoxLoss(nn.Module):
     def __init__(self, neg_pos_ratio):
@@ -207,7 +221,11 @@ class SSDBoxHead(nn.Module):
         )
         boxes = center_form_to_corner_form(boxes)
         detections = (scores, boxes)
+        if MEASURE_TIME:
+            t = time.time()
         detections = self.post_processor(detections)
+        if MEASURE_TIME:
+            print(f'Post processor took {(time.time() - t):.2f}s')
         return detections, {}
 
     def _forward_active(self, cls_logits, bbox_pred):
@@ -482,11 +500,12 @@ class PostProcessor:
             device = batches_scores.device
             batch_size = batches_scores.size(0)
             results = []
-            for batch_id in range(batch_size):
+            for batch_id in tqdm.tqdm(range(batch_size)):
                 scores, boxes = batches_scores[batch_id], batches_boxes[batch_id]  # (N, #CLS) (N, 4)
                 num_boxes = scores.shape[0]
                 num_classes = scores.shape[1]
-
+                if MEASURE_TIME:
+                    print(f'Initial number of boxes : {num_boxes}', end='\n')
                 boxes = boxes.view(num_boxes, 1, 4).expand(num_boxes, num_classes, 4)
                 labels = torch.arange(num_classes, device=device)
                 labels = labels.view(1, num_classes).expand_as(scores)
@@ -508,7 +527,12 @@ class PostProcessor:
                 boxes[:, 0::2] *= self.width
                 boxes[:, 1::2] *= self.height
 
+                if MEASURE_TIME:
+                    t = time.time()
+                    print(f'Number of boxes : {len(boxes)}', end='\n')
                 keep = batched_nms(boxes, scores, labels, self.cfg.TEST.NMS_THRESHOLD)
+                if MEASURE_TIME:
+                    print(f'NMS took {(time.time() - t):.2f}s')
                 # keep only topk scoring predictions
                 keep = keep[:self.cfg.TEST.MAX_PER_IMAGE]
                 boxes, scores, labels = boxes[keep], scores[keep], labels[keep]
@@ -1197,18 +1221,57 @@ def voc_evaluation(dataset, predictions, output_dir, iteration=None):
             continue
         metrics[class_names[i]] = ap
         result_str += "{:<16}: {:.4f}\n".format(class_names[i], ap)
-    # logger.info(result_str)
-
-    # if iteration is not None:
-    #     result_path = os.path.join(output_dir, 'result_{:07d}.txt'.format(iteration))
-    # else:
-    #     result_path = os.path.join(output_dir, 'result_{}.txt'.format(datetime.now().strftime('%Y-%m-%d_%H-%M-%S')))
-    # with open(result_path, "w") as f:
-    #     f.write(result_str)
-
     return dict(metrics=metrics)
 
 
+def coco_evaluation(dataset, predictions, output_dir, iteration=None):
+    coco_dataset = dataset
+    while hasattr(coco_dataset, 'dataset'):
+        coco_dataset = coco_dataset.dataset
+    coco_results = []
+    for i in predictions.keys():
+        prediction = predictions[i]
+        img_info = coco_dataset.get_img_info(i)
+        prediction = prediction.resize((img_info['width'], img_info['height'])).numpy()
+        boxes, labels, scores = prediction['boxes'], prediction['labels'], prediction['scores']
+
+        image_id, annotation = coco_dataset.get_annotation(i)
+        class_mapper = coco_dataset.contiguous_id_to_coco_id
+        if labels.shape[0] == 0:
+            continue
+
+        boxes = boxes.tolist()
+        labels = labels.tolist()
+        scores = scores.tolist()
+        coco_results.extend(
+            [
+                {
+                    "image_id": image_id,
+                    "category_id": class_mapper[labels[k]],
+                    "bbox": [box[0], box[1], box[2] - box[0], box[3] - box[1]],  # to xywh format
+                    "score": scores[k],
+                }
+                for k, box in enumerate(boxes)
+            ]
+        )
+    iou_type = 'bbox'
+    json_result_file = os.path.join(output_dir, iou_type + ".json")
+    with open(json_result_file, "w") as f:
+        json.dump(coco_results, f)
+    from pycocotools.cocoeval import COCOeval
+    coco_gt = coco_dataset.coco
+    coco_dt = coco_gt.loadRes(json_result_file)
+    coco_eval = COCOeval(coco_gt, coco_dt, iou_type)
+    coco_eval.evaluate()
+    coco_eval.accumulate()
+    coco_eval.summarize()
+
+    result_strings = []
+    keys = ["AP", "AP50", "AP75", "APs", "APm", "APl"]
+    metrics = {}
+    for i, key in enumerate(keys):
+        metrics[key] = coco_eval.stats[i]
+    return dict(metrics=metrics)
 
 
 def bbox_iou(bbox_a, bbox_b):

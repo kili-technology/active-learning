@@ -11,3 +11,4 @@ log.txt
 *.pickle
 __pycache__/
 *.code-workspace
+*.vscode

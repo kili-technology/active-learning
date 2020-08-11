@@ -5,20 +5,13 @@ import pickle
 import numpy as np
 
 import al
-from al.dataset import pascal_voc
-from al.dataset import active_dataset
-from al.model.model_zoo.ssd import SSDDetector
-from al.model.model_zoo.image_classification import mobilenet
-from al.model.ssd import SSDLearner
-from al.model.configs import cfg
 from al.train.active_train import ActiveTrain
 from al.helpers.experiment import set_up_experiment, load_config
 from al.experiments import set_up_learner
-from al.helpers.logger import setup_logger
 
 
-EXPERIMENT_NAME = 'pascal_voc_object_detection'
-DATASET = 'pascalvoc_detection'
+EXPERIMENT_NAME = 'coco_simple'
+DATASET = 'coco_object_detection'
 
 FOLDER_PATH = os.path.dirname(__file__)
 OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(EXPERIMENT_NAME, logging_lvl=10)

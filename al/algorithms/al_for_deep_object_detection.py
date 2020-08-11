@@ -20,12 +20,13 @@ class DeepObjectDetectionStrategy(Strategy):
         self.batch_size = 10
         self.logger = logging.getLogger(logger_name)
         if labeled_ds:
-            voc_dataset = labeled_ds.dataset.dataset
-            self.n_classes = len(voc_dataset.class_names)
+            raw_dataset = labeled_ds.dataset.dataset
+            self.n_classes = len(raw_dataset.class_names)
             self.logger.debug(f'Dataset has size {len(labeled_ds)}, with {self.n_classes} classes')
             class_to_instance_size = defaultdict(int)
             for i in range(len(labeled_ds)):
-                _, (_, labels, _) = voc_dataset.get_annotation(i)
+                _, annotations = raw_dataset.get_annotation(i)
+                labels = annotations[1]
                 for label in labels:
                     class_to_instance_size[label] += 1
             self.logger.debug(f'Class to instance size : {class_to_instance_size}')

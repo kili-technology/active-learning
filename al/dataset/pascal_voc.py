@@ -13,7 +13,6 @@ from ..helpers.constants import DATA_ROOT
 from ..model.model_zoo.ssd import Container, get_transforms, get_transforms_semantic
 
 
-
 class PascalVOCObjectDataset(ActiveDataset):
     class_names = ('__background__',
                    'aeroplane', 'bicycle', 'bird', 'boat',
@@ -43,8 +42,6 @@ class PascalVOCObjectDataset(ActiveDataset):
 
     def get_dataset(self, indices):
         return MaskDataset(self.init_dataset, indices)
-
-
 
 
 

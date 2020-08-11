@@ -27,12 +27,12 @@ class ActiveTrain():
         self.logger.debug(f'Scoring...')
         validation_dataset = self.dataset.get_validation_dataset()
         self.logger.debug(f'Computing validation score on {len(validation_dataset)} samples...')
-        validation_score = self.learner.score(validation_dataset)
+        validation_score = self.learner.score(validation_dataset, batch_size=self.learner.val_batch_size)
         scores = {'val': validation_score}
         if on_train:
             labeled_dataset = self.dataset.get_labeled()
             self.logger.debug(f'Computing training score on {len(labeled_dataset)} samples...')
-            train_score = self.learner.score(labeled_dataset)
+            train_score = self.learner.score(labeled_dataset, batch_size=self.learner.val_batch_size)
             scores['train'] = train_score
         self.logger.debug(f'Scored.')
         return scores
@@ -54,6 +54,7 @@ class ActiveTrain():
 
     def train(self, train_parameters, n_iter, assets_per_query, compute_score, score_on_train, output_dir, *args, **kwargs):
         list_scores = []
+        self.learner.val_batch_size = train_parameters.get('val_batch_size', 64)
         self.logger.info(f'Training for {n_iter} steps, querying {assets_per_query} assets per step.')
         for i in range(n_iter):
             # print(f'Step number #{i+1}')
