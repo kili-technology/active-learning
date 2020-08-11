@@ -1,5 +1,0 @@
-torch>=1.3
-torchvision>=0.3
-opencv-python~=4.0
-yacs==0.1.6
-Vizer~=0.1.4
