@@ -6,6 +6,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import BatchSampler, SequentialSampler
+from ptsemseg.models import get_model
+from ptsemseg.loss import get_loss_function
+from ptsemseg.optimizers import get_optimizer
+from ptsemseg.metrics import runningScore
 
 from .active_model import ActiveLearner
 from .model_zoo.ssd import *
@@ -13,36 +17,48 @@ from ..helpers.time import timeit
 from ..helpers.samplers import IterationBasedBatchSampler
 
 
-class UNetLearner(ActiveLearner):
+class SemanticLearner(ActiveLearner):
 
-    def __init__(self, model, cfg, logger_name=None):
+    def __init__(self, model, cfg, logger_name=None, device=0, config=None):
+        super().__init__(device=device)
         self.cfg = cfg
         self.model = model
-        self.criterion = nn.CrossEntropyLoss()
+        if self.cuda_available:
+            self.model.cuda()
+
+        self.criterion = get_loss_function(config)
+        optimizer_cls = get_optimizer(config)
+        optimizer_params = {
+            k: v for k, v in config["training"]["optimizer"].items() if k != "name"}
+        self.optimizer = optimizer_cls(self.model.parameters(), **optimizer_params)
+
         self.logger = logging.getLogger(logger_name)
+        self.inference_img_size = 16
+        self.reducer = nn.AdaptiveAvgPool2d(self.inference_img_size)
 
     def get_predictions(self, dataset):
         self.model.eval()
         batch_sampler = BatchSampler(
             sampler=self.get_base_sampler(len(dataset), shuffle=False), batch_size=16, drop_last=False)
         loader = torch.utils.data.DataLoader(
-            dataset, batch_sampler=batch_sampler,
-            pin_memory=self.cfg.DATA_LOADER.PIN_MEMORY)
-        detections = []
-        loader_ids = []
+            dataset, batch_sampler=batch_sampler)
+        predictions = []
         with torch.no_grad():
-            for (images, labels, id_) in tqdm.tqdm(loader, disable=self.logger.level > 15):
-                loader_ids += list(id_.numpy())
-                features = self.model.backbone(images)
-                cls_logits, bbox_pred = self.model.box_head.predictor(features)
-                detection_batch, _ = self.model.box_head._forward_active(cls_logits, bbox_pred)
-                detections += detection_batch
-        return detections, loader_ids
+            for (images, _) in tqdm.tqdm(loader, disable=self.logger.level > 15):
+                if self.cuda_available:
+                    images = images.cuda()
+                masks = self.model(images)
+                if self.cuda_available:
+                    masks = masks.detach().cpu()
+                reduced_masks = self.reducer(masks)
+                predictions.append(reduced_masks.data)
+        return torch.cat(predictions).numpy()
 
     def inference(self, dataset):
         self.model.eval()
-        detections, loader_ids = self.get_predictions(dataset)
-        return {'detections': detections, 'image_ids': loader_ids}
+        predictions = self.get_predictions(dataset)
+        probabilities = nn.Softmax2d()(torch.from_numpy(predictions)).numpy()
+        return {'predictions': predictions, 'class_probabilities': probabilities}
 
     @staticmethod
     def get_base_sampler(size, shuffle):
@@ -55,37 +71,40 @@ class UNetLearner(ActiveLearner):
     @timeit
     def fit(self, dataset, batch_size, learning_rate, momentum, weight_decay, iterations, shuffle=True, *args, **kwargs):
         self.model.train()
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
         batch_sampler = BatchSampler(
             sampler=self.get_base_sampler(len(dataset), shuffle), batch_size=batch_size, drop_last=False)
-        batch_sampler = IterationBasedBatchSampler(batch_sampler, num_iterations=iterations, start_iter=0)
+        batch_sampler = IterationBasedBatchSampler(
+            batch_sampler, num_iterations=iterations, start_iter=0)
         loader = torch.utils.data.DataLoader(
-            dataset, batch_sampler=batch_sampler, num_workers=self.cfg.DATA_LOADER.NUM_WORKERS,
-            pin_memory=self.cfg.DATA_LOADER.PIN_MEMORY, collate_fn=BatchCollatorSemantic(is_train=True))
+            dataset, batch_sampler=batch_sampler, num_workers=self.cfg.DATA_LOADER.NUM_WORKERS)
         for step, (images, label_image) in tqdm.tqdm(
                 enumerate(loader), disable=self.logger.level > 15, total=len(loader)):
+            if self.cuda_available:
+                images = images.cuda()
+                label_image = label_image.cuda()
             self.model.zero_grad()
-            print(images.shape, label_image.shape)
             mask_preds = self.model(images)
-            print(type(mask_preds), type(label_image))
-            print(mask_preds.shape)
-            loss = self.criterion(mask_preds, label_image)
-            optimizer.zero_grad()
+            self.optimizer.zero_grad()
+            loss = self.criterion(input=mask_preds, target=label_image)
             loss.backward()
-            optimizer.step()
+            self.optimizer.step()
 
-    def score(self, dataset, batch_size=16, *args, **kwargs):
+    def score(self, dataset, batch_size, *args, **kwargs):
         self.model.eval()
-        results_dict = {}
+        running_metrics_val = runningScore(
+            dataset.dataset.n_classes)
         batch_sampler = BatchSampler(
             sampler=self.get_base_sampler(len(dataset), shuffle=False), batch_size=batch_size, drop_last=False)
         loader = torch.utils.data.DataLoader(
-            dataset, batch_sampler=batch_sampler,
-            pin_memory=self.cfg.DATA_LOADER.PIN_MEMORY)
+            dataset, batch_sampler=batch_sampler)
         with torch.no_grad():
-            for (images, targets, image_ids) in tqdm.tqdm(loader, disable=self.logger.level > 15):
+            for (images, labels_val) in tqdm.tqdm(loader, disable=self.logger.level > 15):
+                if self.cuda_available:
+                    images = images.cuda()
+                    labels_val = labels_val.cuda()
                 outputs = self.model(images)
-                results_dict.update(
-                    {img_id: result for img_id, result in zip(image_ids, outputs)}
-                )
-        return voc_evaluation(dataset=dataset, predictions=results_dict, output_dir=None, iteration=None)
+                pred = outputs.data.max(1)[1].cpu().numpy()
+                gt = labels_val.data.cpu().numpy()
+                running_metrics_val.update(gt, pred)
+        score, class_iou = running_metrics_val.get_scores()
+        return {**score, **class_iou}

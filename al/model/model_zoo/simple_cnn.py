@@ -13,9 +13,11 @@ class ConvModel(nn.Module):
             nn.Conv2d(16, 16, 3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2),
+            nn.Dropout(0.25),
             nn.Conv2d(16, 16, 3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten(),
+            nn.Dropout(0.5),
             nn.Linear(7*7*16, 10)
         ])
     

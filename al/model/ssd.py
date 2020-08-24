@@ -89,7 +89,7 @@ class SSDLearner(ActiveLearner):
             dataset, batch_sampler=batch_sampler,
             pin_memory=self.cfg.DATA_LOADER.PIN_MEMORY, collate_fn=BatchCollator(is_train=True))
         for step, (images, targets, _) in tqdm.tqdm(
-                enumerate(loader), disable=False, total=len(loader)):
+                enumerate(loader), disable=self.logger.level > 15, total=len(loader)):
             if self.cuda_available:
                 images = images.cuda()
                 targets = self.send_container_to_cuda(targets)

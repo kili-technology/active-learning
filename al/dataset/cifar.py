@@ -34,7 +34,7 @@ class Cifar100Dataset(ActiveDataset):
 
     def __init__(self, indices, n_init=100, output_dir=None, train=True, queries_name='queries.txt'):
         self.init_dataset = self._get_initial_dataset(train)
-        super().__init__(self.get_dataset(indices), n_init=n_init, output_dir=output_dir)
+        super().__init__(self.get_dataset(indices), n_init=n_init, output_dir=output_dir, queries_name=queries_name)
 
     def _get_initial_dataset(self, train=True):
         if train:

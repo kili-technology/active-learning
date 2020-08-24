@@ -1,26 +1,24 @@
 experiment:
-  n_repeats: 3
   strategy: 'al_for_deep_object_detection'
-  save_results: False
+  save_results: True
 active_learning:
   assets_per_query: 2000
   n_iter: 30
-  # init_size: 20000
-  init_size: 20
+  init_size: 20000
+  # init_size: 20
   compute_score: True
   score_on_train: False
 train_parameters:
   batch_size: 16
   val_batch_size: 16
-  # iterations: 1000
-  iterations: 10
+  iterations: 1000
+  # iterations: 10
   learning_rate: 0.003
   shuffle: True
   momentum: 0.9
   weight_decay: 0.0005
 dataset:
-  # train_size: 80000
-  train_size: 80
+  train_size: 80000
   test_size: 10000
 model:
   # backbone: 'mobilenet_v2'

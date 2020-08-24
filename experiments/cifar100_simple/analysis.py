@@ -8,8 +8,8 @@ import seaborn as sns
 
 
 
-EXPERIMENT_NAME = 'mnist_simple'
-model_name = 'simplenet'
+EXPERIMENT_NAME = 'cifar100_simple'
+model_name = 'mobilenet'
 # model_name = 'simple_cnn'
 OUTPUT_DIR = f'experiments/{EXPERIMENT_NAME}/results'
 FIGURE_DIR = f'experiments/{EXPERIMENT_NAME}/figures'

@@ -16,13 +16,11 @@ from al.helpers.experiment import set_up_experiment, load_config
 from al.experiments import set_up_learner
 
 
-
-EXPERIMENT_NAME = 'pascal_voc_segmentation'
-FOLDER_PATH = os.path.expanduser(f'~/Documents/active-learning/experiments/{EXPERIMENT_NAME}')
-REPEATS = 2
-
-OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(EXPERIMENT_NAME)
 DATASET = 'pascalvoc_segmentation'
+FOLDER_PATH = os.path.dirname(__file__)
+
+OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(__file__, FOLDER_PATH, logging_lvl=10)
+
 
 logger.info('-------------------------')
 logger.info('--LAUNCHING EXPERIMENTS--')
@@ -34,16 +32,13 @@ setupper = set_up_learner(DATASET)
 config['active_learning']['output_dir'] = OUTPUT_DIR
 config['experiment']['logger_name'] = logger_name
 logger.debug('Getting dataset and learner')
-dataset, learner = setupper(config, OUTPUT_DIR, logger)
+dataset, learner = setupper(config, OUTPUT_DIR, logger, device=1)
 logger.debug('Getting trainer')
 trainer = ActiveTrain(learner, dataset, config['experiment']['strategies'][0], logger_name)
 logger.debug('Training...')
 
-
-
 scores = trainer.train(config['train_parameters'], **config['active_learning'])
-# logger.debug('Done training...')
-# logger.info('-------------------------')
+logger.debug('Done training...')
 
 # index_train = np.arange(TRAIN_SIZE)
 

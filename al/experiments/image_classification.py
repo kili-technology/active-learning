@@ -10,12 +10,13 @@ from al.dataset.cifar import Cifar100Dataset
 def set_up_mnist(config, output_dir, logger, device=0, queries_name='queries.txt'):
     train_size, val_size, init_size = config['dataset']['train_size'], config['dataset']['val_size'], config['active_learning']['init_size']
     index_validation = np.arange(val_size)
-    index_train = np.arange(val_size, train_size+val_size)
+    index_train = np.arange(train_size)
     logger_name = config['experiment']['logger_name']
     logger.info('Setting up datasets...')
 
     dataset = MnistDataset(index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name)
-    dataset.set_validation_dataset(dataset.get_dataset(index_validation))
+    test_dataset = MnistDataset(index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name, train=False)
+    dataset.set_validation_dataset(test_dataset.get_dataset(index_validation))
 
     logger.info('Setting up models...')
 

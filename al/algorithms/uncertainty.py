@@ -35,7 +35,7 @@ class MarginStrategy(BaseUncertaintyStrategy):
         top_preds = probabilities[np.arange(len(probabilities)), sorted_preds[:, -1]]
         second_preds = probabilities[np.arange(len(probabilities)), sorted_preds[:, -2]]
         difference = top_preds - second_preds
-        return difference
+        return - difference
 
 
 class EntropyStrategy(BaseUncertaintyStrategy):
@@ -44,5 +44,15 @@ class EntropyStrategy(BaseUncertaintyStrategy):
         inference_result = learner.inference(dataset)
         probabilities = inference_result['class_probabilities']
         assert len(probabilities) == len(dataset)
+        entropies = -np.sum(probabilities * np.log(probabilities), axis=1)
+        return entropies
+
+class SemanticEntropyStrategy(BaseUncertaintyStrategy):
+    @timeit
+    def score_dataset(self, dataset, learner, log_time={}):
+        inference_result = learner.inference(dataset)
+        probabilities = inference_result['class_probabilities']
+        bs, _, h, w = probabilities.shape
+        probabilities = np.reshape(probabilities, (bs, -1))
         entropies = -np.sum(probabilities * np.log(probabilities), axis=1)
         return entropies

@@ -1,5 +1,4 @@
 experiment:
-  n_repeats: 2
   strategy: 'uncertainty_sampling'
 active_learning:
   assets_per_query: 1000

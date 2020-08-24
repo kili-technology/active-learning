@@ -1,20 +1,19 @@
 experiment:
-    n_repeats: 2
-    strategies: ['random_sampling', 'margin_sampling']
-    # model: 'mobilenet'
-    model: 'nasnet'
-    repeats: 5
-    save_results: False
+  strategies: ['random_sampling', 'bayesian_bald_sampling', 'bayesian_entropy_sampling', 'coreset', 'margin_sampling', 'entropy_sampling']
+  model: 'mobilenet'
+  # model: 'nasnet'
+  repeats: 1
+  save_results: True
 active_learning:
   assets_per_query: 1000
-  n_iter: 5
-  init_size: 10000
+  n_iter: 30
+  init_size: 5000
   compute_score: True
   score_on_train: True
 train_parameters:
   batch_size: 32
-  iterations: 100
+  iterations: 1000
   learning_rate: 0.003
   shuffle: True
 dataset:
-  train_size: 30000
+  train_size: 50000

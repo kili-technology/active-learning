@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from ..model.model_zoo import *
@@ -65,23 +67,19 @@ def set_up_coco_object_detection(config, output_dir, logger, device=0, queries_n
 
 
 def get_model_config(backbone, dataset):
+    config_path = os.getenv('MODULE_PATH')
     if dataset == 'voc':
         if backbone == 'mobilenet_v2':
-            config_file = 'al/model/configs/mobilenet_v2_ssd320_voc0712.yaml'
-            cfg.merge_from_file(config_file)
-            model = SSDDetector(cfg, backbone)
+            config_file = 'mobilenet_v2_ssd320_voc0712.yaml'
         elif backbone == 'vgg':
-            config_file = 'al/model/configs/vgg_ssd300_voc0712.yaml'
-            cfg.merge_from_file(config_file)
-            model = SSDDetector(cfg, backbone)
+            config_file = 'vgg_ssd300_voc0712.yaml'
     elif dataset == 'coco':
         if backbone == 'vgg':
-            config_file = 'al/model/configs/vgg_ssd300_coco_trainval35k.yaml'
-            cfg.merge_from_file(config_file)
-            model = SSDDetector(cfg, backbone)
+            config_file = 'vgg_ssd300_coco_trainval35k.yaml'
         elif backbone == 'mobilenet_v2':
-            config_file = 'al/model/configs/mobilenet_v2_ssd320_coco.yaml'
-            cfg.merge_from_file(config_file)
-            model = SSDDetector(cfg, backbone)
+            config_file = 'mobilenet_v2_ssd320_coco.yaml'
+    path = os.path.expanduser(os.path.join(config_path, config_file))
+    cfg.merge_from_file(path)
+    model = SSDDetector(cfg, backbone)
     cfg.freeze()
     return model, cfg

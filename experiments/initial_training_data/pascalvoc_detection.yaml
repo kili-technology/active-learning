@@ -1,5 +1,4 @@
 experiment:
-  n_repeats: 2
   strategy: 'uncertainty_sampling'
   config_file: 'al/model/configs/mobilenet_v2_ssd320_voc0712.yaml'
 active_learning:

@@ -10,11 +10,10 @@ from al.helpers.experiment import set_up_experiment, load_config
 from al.experiments import set_up_learner
 
 
-EXPERIMENT_NAME = 'coco_simple'
 DATASET = 'coco_object_detection'
 
 FOLDER_PATH = os.path.dirname(__file__)
-OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(EXPERIMENT_NAME, logging_lvl=10)
+OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(__file__, FOLDER_PATH, logging_lvl=10)
 
 logger.info('-------------------------')
 logger.info('--LAUNCHING EXPERIMENTS--')

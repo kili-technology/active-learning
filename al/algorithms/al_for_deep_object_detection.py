@@ -43,7 +43,6 @@ class DeepObjectDetectionStrategy(Strategy):
         if self.weighted:
             weights_parameters['n_classes'] = self.n_classes
             weights_parameters['class_to_instance_size'] = self.class_to_instance_size
-        self.logger.debug(f'Logits 0 : {detections["logits"][0]} made on {len(dataset)} samples')
         return compute_uncertainties(detections, self.agregation, self.weighted, weights_parameters)
 
     @timeit

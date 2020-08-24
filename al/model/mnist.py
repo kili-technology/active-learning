@@ -10,6 +10,7 @@ from torch.utils.data.sampler import BatchSampler, SequentialSampler
 from .active_model import ActiveLearner
 from ..helpers.time import timeit
 from ..helpers.samplers import IterationBasedBatchSampler
+from ..model.utils import enable_dropout, disable_dropout
 
 
 class MnistLearner(ActiveLearner):
@@ -20,11 +21,14 @@ class MnistLearner(ActiveLearner):
         self.criterion = nn.CrossEntropyLoss()
         self.logger = logging.getLogger(logger_name)
 
-    def get_predictions(self, dataset):
+    def get_predictions(self, dataset, bayesian=False):
+        self.model.eval()
         batch_sampler = BatchSampler(
             sampler=self.get_base_sampler(len(dataset), shuffle=False), batch_size=256, drop_last=False)
         loader = torch.utils.data.DataLoader(dataset, batch_sampler=batch_sampler)
         preds = []
+        if bayesian:
+            enable_dropout(self.model)
         with torch.no_grad():
             for step, (data, _) in tqdm.tqdm(
                     enumerate(loader), disable=self.logger.level > 15, total=len(loader)):
@@ -38,8 +42,8 @@ class MnistLearner(ActiveLearner):
                 preds.append(prediction.data)
         return torch.cat(preds).numpy()
 
-    def inference(self, dataset):
-        predictions = self.get_predictions(dataset)
+    def inference(self, dataset, bayesian=False):
+        predictions = self.get_predictions(dataset, bayesian=bayesian)
         probabilities = np.exp(predictions) / np.exp(predictions).sum(axis=1)[:, None]
         return {'class_probabilities': probabilities, 'predictions': predictions}
 
@@ -53,6 +57,8 @@ class MnistLearner(ActiveLearner):
 
     @timeit
     def fit(self, dataset, batch_size, learning_rate, iterations, shuffle=True, *args, **kwargs):
+        self.model.train()
+        disable_dropout(self.model)
         if self.cuda_available:
             self.model.cuda()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
@@ -74,6 +80,8 @@ class MnistLearner(ActiveLearner):
             optimizer.step()
 
     def score(self, dataset, batch_size=256, *args, **kwargs):
+        self.model.eval()
+        disable_dropout(self.model)
         total_accuracy = 0.0
         total_loss = 0.0
         batch_sampler = BatchSampler(

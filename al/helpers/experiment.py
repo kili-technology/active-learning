@@ -4,13 +4,13 @@ import yaml
 from .logger import setup_logger
 
 
-def set_up_experiment(experiment_name, logging_lvl=10):
-    OUTPUT_DIR = f'experiments/{experiment_name}/results'
-    FIGURE_DIR = f'experiments/{experiment_name}/figures'
+def set_up_experiment(experiment, folder, logging_lvl=10):
+    OUTPUT_DIR = os.path.join(folder, 'results')
+    FIGURE_DIR = os.path.join(folder, 'figures')
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(FIGURE_DIR, exist_ok=True)
 
-    logger_name = experiment_name
+    logger_name = experiment
     logger = setup_logger(logger_name, OUTPUT_DIR, logging_lvl=logging_lvl)
     return OUTPUT_DIR, FIGURE_DIR, logger, logger_name
 

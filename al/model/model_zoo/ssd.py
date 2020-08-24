@@ -500,7 +500,7 @@ class PostProcessor:
             device = batches_scores.device
             batch_size = batches_scores.size(0)
             results = []
-            for batch_id in tqdm.tqdm(range(batch_size)):
+            for batch_id in range(batch_size):
                 scores, boxes = batches_scores[batch_id], batches_boxes[batch_id]  # (N, #CLS) (N, 4)
                 num_boxes = scores.shape[0]
                 num_classes = scores.shape[1]
@@ -1107,12 +1107,6 @@ def build_transforms(cfg, is_train=True):
     transform = Compose(transform)
     return transform
 
-
-def build_semantic_transforms(cfg, is_train=True):
-    
-    return transform
-
-
 def build_target_transform(cfg):
     transform = SSDTargetTransform(PriorBox(cfg)(),
                                    cfg.MODEL.CENTER_VARIANCE,
@@ -1147,9 +1141,11 @@ class BatchCollatorSemantic:
     def __call__(self, batch):
         transposed_batch = list(zip(*batch))
         images = default_collate([x[0] for x in transposed_batch[0]])
+        print('batch collate im', [x.shape for x in images])
 
         if self.is_train:
             targets = default_collate(transposed_batch[1])
+            print('batch collate targets', [x.shape for x in targets])
             # list_targets = transposed_batch[1]
             # targets = Container(
             #     {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
@@ -1167,8 +1163,8 @@ def get_transforms(cfg, is_train):
 def get_transforms_semantic(cfg):
     train_transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize(cfg.INPUT.IMAGE_SIZE),
-        extended_transforms.FlipChannels(),
         torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
     target_transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize(cfg.INPUT.IMAGE_SIZE),

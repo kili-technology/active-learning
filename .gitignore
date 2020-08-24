@@ -12,3 +12,6 @@ log.txt
 __pycache__/
 *.code-workspace
 *.vscode
+results/
+nohup.out
+*.png

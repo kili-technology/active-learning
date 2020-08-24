@@ -1,20 +1,37 @@
 experiment:
-  n_repeats: 2
-  strategies: ['random_sampling', 'uncertainty_sampling']
+  strategies: ['semantic_entropy_sampling', 'random_sampling']
   config_file: 'al/model/configs/unet.yaml'
+  repeats: 1
 active_learning:
-  assets_per_query: 1000
+  assets_per_query: 200
+  # assets_per_query: 20
   n_iter: 5
-  init_size: 1000
+  init_size: 200
   compute_score: True
   score_on_train: False
 train_parameters:
-  batch_size: 4
-  iterations: 2
-  learning_rate: 0.001
+  batch_size: 16
+  val_batch_size: 32
+  iterations: 500
+  # iterations: 5
+  learning_rate: 1.0e-3
   shuffle: True
   momentum: 0.9
   weight_decay: 0.0005
+training:
+  optimizer:
+    name: 'sgd'
+    lr: 1.0e-10
+    weight_decay: 0.0005
+    momentum: 0.99
+  loss:
+      name: 'cross_entropy'
+      size_average: False  
 dataset:
-  train_size: 5000
-model_type: 'segmentation'
+  train_size: 1464
+  # train_size: 200
+  test_size: 1449
+  # test_size: 200
+model: 
+  arch: fcn8s
+

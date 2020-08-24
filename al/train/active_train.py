@@ -19,9 +19,11 @@ class ActiveTrain():
     @timeit
     def train_iter(self, *args, **kwargs):
         labeled_dataset = self.dataset.get_labeled()
-        self.logger.debug(f'Training on {len(labeled_dataset)} samples...')
+        size_labeled = len(labeled_dataset)
+        self.logger.debug(f'Training on {size_labeled} samples...')
         self.learner.fit(labeled_dataset, *args, **kwargs)
-
+        return size_labeled
+        
     @timeit
     def score(self, on_train=False, log_time={}):
         self.logger.debug(f'Scoring...')
@@ -57,12 +59,11 @@ class ActiveTrain():
         self.learner.val_batch_size = train_parameters.get('val_batch_size', 64)
         self.logger.info(f'Training for {n_iter} steps, querying {assets_per_query} assets per step.')
         for i in range(n_iter):
-            # print(f'Step number #{i+1}')
             log_time = {}
             self.logger.info(f'Step number #{i+1}')
             self.logger.debug(f'Beginning training iteration...')
             train_parameters['log_time'] = log_time
-            self.train_iter(**train_parameters)
+            size_labeled = self.train_iter(**train_parameters)
             self.logger.debug(f'Done')
             if compute_score:
                 scores = self.score(on_train=score_on_train, log_time=log_time)
@@ -71,6 +72,7 @@ class ActiveTrain():
             self.logger.debug(f'Beginning active learning query...')
             self.add_to_labeled(assets_per_query, log_time=log_time)
             scores['step'] = i+1
+            scores['size_labeled'] = size_labeled
             scores['times'] = log_time
             list_scores.append(scores)
             self.logger.debug('Done.')

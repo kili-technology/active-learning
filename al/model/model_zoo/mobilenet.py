@@ -58,13 +58,13 @@ class MobileNetV2(nn.Module):
         self.stage5 = self._make_stage(3, 64, 96, 1, 6)
         self.stage6 = self._make_stage(3, 96, 160, 1, 6)
         self.stage7 = LinearBottleNeck(160, 320, 1, 6)
-
+        self.dropout1 = nn.Dropout2d(0.25)
         self.conv1 = nn.Sequential(
             nn.Conv2d(320, 1280, 1),
             nn.BatchNorm2d(1280),
             nn.ReLU6(inplace=True)
         )
-
+        self.dropout2 = nn.Dropout2d(0.5)
         self.conv2 = nn.Conv2d(1280, class_num, 1)
 
     def forward(self, x):
@@ -76,8 +76,10 @@ class MobileNetV2(nn.Module):
         x = self.stage5(x)
         x = self.stage6(x)
         x = self.stage7(x)
+        x = self.dropout1(x)
         x = self.conv1(x)
         x = F.adaptive_avg_pool2d(x, 1)
+        x = self.dropout2(x)
         x = self.conv2(x)
         x = x.view(x.size(0), -1)
 

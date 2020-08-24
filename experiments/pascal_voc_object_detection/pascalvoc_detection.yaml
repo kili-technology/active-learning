@@ -1,7 +1,7 @@
 experiment:
-  n_repeats: 3
-  strategy: 'al_for_deep_object_detection'
-  save_results: False
+  strategies: ['random_sampling', 'al_for_deep_object_detection']
+  save_results: True
+  repeats: 1
 active_learning:
   assets_per_query: 100
   n_iter: 30
@@ -17,8 +17,8 @@ train_parameters:
   momentum: 0.9
   weight_decay: 0.0005
 dataset:
-  train_size: 4000
-  test_size: 1000
+  train_size: 5000
+  test_size: 3000
 model:
   backbone: 'mobilenet_v2'
   # backbone: 'vgg'
