@@ -52,7 +52,7 @@ class SemanticEntropyStrategy(BaseUncertaintyStrategy):
     def score_dataset(self, dataset, learner, log_time={}):
         inference_result = learner.inference(dataset)
         probabilities = inference_result['class_probabilities']
-        bs, _, h, w = probabilities.shape
+        bs, _, _, _ = probabilities.shape
         probabilities = np.reshape(probabilities, (bs, -1))
         entropies = -np.sum(probabilities * np.log(probabilities), axis=1)
         return entropies

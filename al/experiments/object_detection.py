@@ -20,9 +20,9 @@ def set_up_pascalvoc_detection(config, output_dir, logger, device=0, queries_nam
     logger_name = config['experiment']['logger_name']
 
     dataset = PascalVOCObjectDataset(
-        index_train, n_init=init_size, output_dir=output_dir, cfg=cfg)
+        index_train, n_init=init_size, output_dir=output_dir, cfg=cfg, queries_name=queries_name)
     test_dataset = PascalVOCObjectDataset(
-        index_test, n_init=init_size, output_dir=output_dir, cfg=cfg, train=False)
+        index_test, n_init=init_size, output_dir=output_dir, cfg=cfg, train=False, queries_name=queries_name)
     dataset.set_validation_dataset(test_dataset.dataset)
 
     logger.info(f'Dataset initial train size : {len(dataset.init_dataset)}')
@@ -47,11 +47,9 @@ def set_up_coco_object_detection(config, output_dir, logger, device=0, queries_n
     logger_name = config['experiment']['logger_name']
 
     dataset = COCOObjectDataset(
-        index_train, n_init=init_size, output_dir=output_dir, cfg=cfg)
-    # test_dataset = COCOObjectDataset(
-    #     index_test, n_init=init_size, output_dir=output_dir, cfg=cfg).get_dataset(index_test)
+        index_train, n_init=init_size, output_dir=output_dir, cfg=cfg, queries_name=queries_name)
     test_dataset = COCOObjectDataset(
-        index_test, n_init=init_size, output_dir=output_dir, cfg=cfg, train=False)
+        index_test, n_init=init_size, output_dir=output_dir, cfg=cfg, train=False, queries_name=queries_name)
     
 
     logger.info(f'Dataset initial train size : {len(dataset.init_dataset)}')

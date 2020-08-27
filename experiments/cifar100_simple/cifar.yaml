@@ -2,7 +2,7 @@ experiment:
   strategies: ['random_sampling', 'bayesian_bald_sampling', 'bayesian_entropy_sampling', 'coreset', 'margin_sampling', 'entropy_sampling']
   model: 'mobilenet'
   # model: 'nasnet'
-  repeats: 1
+  repeats: 3
   save_results: True
 active_learning:
   assets_per_query: 1000

@@ -3,6 +3,9 @@ import logging
 import pickle
 
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import al
 from al.dataset import mnist
@@ -29,17 +32,26 @@ setupper = set_up_learner(DATASET)
 
 config['active_learning']['output_dir'] = OUTPUT_DIR
 config['experiment']['logger_name'] = logger_name
-model_name = config['experiment']['model']
+model_name = 'simple_cnn'
 
+strategies = ['random_sampling', 'margin_sampling']
+repeats = 2
 score_data = {}
+config['active_learning']['assets_per_query'] = 20
+config['active_learning']['n_iter'] = 5
+config['active_learning']['init_size'] = 20
 
-for i in range(config['experiment']['repeats']):
+config['train_parameters']['batch_size'] = 16
+config['train_parameters']['iterations'] = 100
+
+
+for i in range(repeats):
     logger.info('---------------------------')
     logger.info(f'--------ROUND OF TRAININGS NUMBER #{i+1}--------')
     logger.info('---------------------------')
-    for strategy in config['experiment']['strategies']:
+    for strategy in strategies:
         dataset, learner = setupper(
-            config, OUTPUT_DIR, logger, queries_name=f'queries-{strategy}-{i}-{model_name}.txt')
+            config, OUTPUT_DIR, logger)
         logger.info('---------------------------')
         logger.info(f'----STRATEGY : {strategy}----')
         logger.info('---------------------------')
@@ -52,6 +64,23 @@ for i in range(config['experiment']['repeats']):
     logger.info(f'--------DONE--------')
     logger.info('---------------------------\n\n\n')
 
-if config['experiment']['save_results']:
-    with open(f'{OUTPUT_DIR}/scores-{model_name}.pickle', 'wb') as f:
-        pickle.dump(score_data, f)
+
+data = []
+for (strategy, experiment_number), scores_experiment in score_data.items():
+    for step_result in scores_experiment:
+        val_step_result = step_result['val']
+        step = step_result['step']
+        data.append(
+            {'strategy': strategy,
+             'experiment': experiment_number,
+             'step': step,
+             **val_step_result})
+df = pd.DataFrame(data)
+
+plot_dir = os.path.join(os.path.dirname(__file__), 'figures')
+
+plt.figure(num=0, figsize=(12, 5))
+sns.lineplot(x='step', y='accuracy', hue='strategy', data=df)
+plt.ylabel('Accuracy')
+plt.show()
+plt.savefig(os.path.join(plot_dir, 'accuracy_test.png'))

@@ -14,7 +14,6 @@ from ..helpers.time import timeit
 from ..helpers.samplers import IterationBasedBatchSampler
 
 
-
 class SSDLearner(ActiveLearner):
 
     def __init__(self, model, cfg, logger_name=None, device=0, dataset='voc'):
@@ -40,7 +39,8 @@ class SSDLearner(ActiveLearner):
                     images = images.cuda()
                 features = self.model.backbone(images)
                 cls_logits, bbox_pred = self.model.box_head.predictor(features)
-                detection_batch, _ = self.model.box_head._forward_active(cls_logits, bbox_pred)
+                detection_batch, _ = self.model.box_head._forward_active(
+                    cls_logits, bbox_pred)
                 detections += detection_batch
         return detections, loader_ids
 
@@ -74,17 +74,18 @@ class SSDLearner(ActiveLearner):
                 except:
                     targets[key] = val
         return targets
-        
 
     @timeit
     def fit(self, dataset, batch_size, learning_rate, momentum, weight_decay, iterations, shuffle=True, *args, **kwargs):
         if self.cuda_available:
             self.model.cuda()
         self.model.train()
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
+        optimizer = torch.optim.SGD(self.model.parameters(
+        ), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
         batch_sampler = BatchSampler(
-            sampler=self.get_base_sampler(len(dataset), shuffle), batch_size=batch_size, drop_last=False)
-        batch_sampler = IterationBasedBatchSampler(batch_sampler, num_iterations=iterations, start_iter=0)
+            sampler=self.get_base_sampler(len(dataset), shuffle), batch_size=batch_size, drop_last=True)
+        batch_sampler = IterationBasedBatchSampler(
+            batch_sampler, num_iterations=iterations, start_iter=0)
         loader = torch.utils.data.DataLoader(
             dataset, batch_sampler=batch_sampler,
             pin_memory=self.cfg.DATA_LOADER.PIN_MEMORY, collate_fn=BatchCollator(is_train=True))
@@ -114,9 +115,10 @@ class SSDLearner(ActiveLearner):
                     images = images.cuda()
                 outputs = self.model(images)
                 results_dict.update(
-                    {img_id: self.send_container_to_cpu(result) for img_id, result in zip(image_ids, outputs)}
+                    {img_id: self.send_container_to_cpu(
+                        result) for img_id, result in zip(image_ids, outputs)}
                 )
         if self.dataset == 'voc':
             return voc_evaluation(dataset=dataset, predictions=results_dict, output_dir=None, iteration=None)
-        elif self.dataset == 'coco': 
+        elif self.dataset == 'coco':
             return coco_evaluation(dataset=dataset, predictions=results_dict, output_dir=os.path.expanduser('~/data/coco'), iteration=None)

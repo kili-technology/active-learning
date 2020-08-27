@@ -22,15 +22,18 @@ class DeepObjectDetectionStrategy(Strategy):
         if labeled_ds:
             raw_dataset = labeled_ds.dataset.dataset
             self.n_classes = len(raw_dataset.class_names)
-            self.logger.debug(f'Dataset has size {len(labeled_ds)}, with {self.n_classes} classes')
+            self.logger.debug(
+                f'Dataset has size {len(labeled_ds)}, with {self.n_classes} classes')
             class_to_instance_size = defaultdict(int)
             for i in range(len(labeled_ds)):
                 _, annotations = raw_dataset.get_annotation(i)
                 labels = annotations[1]
                 for label in labels:
                     class_to_instance_size[label] += 1
-            self.logger.debug(f'Class to instance size : {class_to_instance_size}')
-            self.logger.debug(f'Total instance count : {sum(list(class_to_instance_size.values()))}')
+            self.logger.debug(
+                f'Class to instance size : {class_to_instance_size}')
+            self.logger.debug(
+                f'Total instance count : {sum(list(class_to_instance_size.values()))}')
             self.class_to_instance_size = class_to_instance_size
 
     @timeit
@@ -38,7 +41,8 @@ class DeepObjectDetectionStrategy(Strategy):
         inference_result = learner.inference(dataset)
         detections, unlabeled_ids = inference_result['detections'], inference_result['image_ids']
         self.id2uncertaintyId = {i: k for k, i in enumerate(unlabeled_ids)}
-        self.uncertaintyId2id = {v: k for k, v in self.id2uncertaintyId.items()}
+        self.uncertaintyId2id = {v: k for k,
+                                 v in self.id2uncertaintyId.items()}
         weights_parameters = {}
         if self.weighted:
             weights_parameters['n_classes'] = self.n_classes
@@ -48,9 +52,13 @@ class DeepObjectDetectionStrategy(Strategy):
     @timeit
     def return_top_indices(self, dataset, learner, top, log_time={}):
         uncertainties = self.score_dataset(dataset, learner, log_time=log_time)
+        # self.logger.info(f'Uncertainties : {uncertainties}')
         query_uncertainty_idx = select_top_indices(
             uncertainties, permut=self.permut, batch_size=self.batch_size, n_instances=top)
         query_uncertainty_idx = list(map(int, query_uncertainty_idx))
+        self.logger.info(f'Mean uncertainty : {uncertainties.mean()}')
+        self.logger.info(
+            f'Mean Selected uncertainties : {uncertainties[query_uncertainty_idx].mean()}')
         assert max(query_uncertainty_idx) < len(uncertainties)
         return query_uncertainty_idx
 
@@ -65,10 +73,12 @@ def compute_uncertainties_asset(detection, weighted=False, weights_parameters={}
         predicted_class = int(np.argsort(probas, axis=1)[:, ::-1][0, 0])
         c2isize = weights_parameters['class_to_instance_size']
         n_instances = sum(list(c2isize.values()))
-        weight = (n_instances + weights_parameters['n_classes']) / (1 + c2isize[predicted_class])
-    else: 
+        weight = (
+            n_instances + weights_parameters['n_classes']) / (1 + c2isize[predicted_class])
+    else:
         weight = 1
     return weight * v1_vs_2, labels
+
 
 def agregate_detection_uncertainties(agregation_method):
     def agregation(values, labels):
@@ -80,6 +90,7 @@ def agregate_detection_uncertainties(agregation_method):
             return values.max()
     return agregation
 
+
 def compute_uncertainties(detections, agregation, weighted, weights_parameters):
     agregate_func = agregate_detection_uncertainties(agregation)
     uncertainties = np.array(list(map(
@@ -88,7 +99,7 @@ def compute_uncertainties(detections, agregation, weighted, weights_parameters):
     return uncertainties
 
 
-def select_top_batches(uncertainties, n_instances=100, batch_size=10):    
+def select_top_batches(uncertainties, n_instances=100, batch_size=3):
     n_samples = len(uncertainties)
     batch_uncertainties = np.array([
         uncertainties[i:i+batch_size].sum()
@@ -101,24 +112,26 @@ def select_top_batches(uncertainties, n_instances=100, batch_size=10):
     selected_indices = []
     n_selected = 0
     for batch_id in ranked[:n_batches-1]:
-        selected_indices += [s for s in list(range(batch_size*batch_id, batch_size*(batch_id+1))) if s<n_samples]
+        selected_indices += [s for s in list(
+            range(batch_size*batch_id, batch_size*(batch_id+1))) if s < n_samples]
         n_selected += batch_size
     if batch_size < n_instances:
         batch_id = ranked[n_batches-1]
         selected_indices += [s for s in list(np.random.choice(
             list(range(batch_size*batch_id, batch_size*(batch_id+1))),
-            size=n_instances-n_selected, replace=False)) if s<n_samples]
+            size=n_instances-n_selected, replace=False)) if s < n_samples]
     return selected_indices
+
 
 def select_top_indices(uncertainties, permut=True, n_instances=100, batch_size=10):
     if permut:
         permutation = np.random.permutation(len(uncertainties))
         inverse_permutation = np.argsort(permutation)
-        permuted2original = dict(zip(inverse_permutation, np.arange(len(permutation))))
+        permuted2original = dict(
+            zip(inverse_permutation, np.arange(len(permutation))))
         permuted_uncertainties = uncertainties[permutation]
         selected_idx_permuted = select_top_batches(permuted_uncertainties,
-                n_instances=n_instances, batch_size=batch_size)
+                                                   n_instances=n_instances, batch_size=batch_size)
         return np.array([permuted2original[x] for x in selected_idx_permuted])
     else:
         return np.array(select_top_batches(uncertainties, n_instances=n_instances, batch_size=batch_size))
-

@@ -7,7 +7,7 @@ from ..model.configs import cfg
 from ..dataset.pascal_voc import PascalVOCSemanticDataset
 
 
-def set_up_pascalvoc_segmentation(config, output_dir, logger, device=0):
+def set_up_pascalvoc_segmentation(config, output_dir, logger, device=0, queries_name='queries.txt'):
     logger.info('Setting up datasets...')
 
     init_size = config['active_learning']['init_size']
@@ -16,9 +16,9 @@ def set_up_pascalvoc_segmentation(config, output_dir, logger, device=0):
     logger_name = config['experiment']['logger_name']
 
     dataset = PascalVOCSemanticDataset(
-        index_train, n_init=init_size, output_dir=output_dir)
+        index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name)
     test_dataset = PascalVOCSemanticDataset(
-        index_test, n_init=init_size, output_dir=output_dir, train=False)
+        index_test, n_init=init_size, output_dir=output_dir, train=False, queries_name=queries_name)
     dataset.set_validation_dataset(test_dataset.dataset)
 
     logger.info(f'Dataset initial train size : {len(dataset.init_dataset)}')
