@@ -3,6 +3,7 @@ import numpy as np
 from .baseline import Strategy
 from ..helpers.time import timeit
 
+
 class BaseUncertaintyStrategy(Strategy):
 
     @timeit
@@ -32,8 +33,10 @@ class MarginStrategy(BaseUncertaintyStrategy):
         probabilities = inference_result['class_probabilities']
         assert len(probabilities) == len(dataset)
         sorted_preds = np.argsort(probabilities, axis=1)
-        top_preds = probabilities[np.arange(len(probabilities)), sorted_preds[:, -1]]
-        second_preds = probabilities[np.arange(len(probabilities)), sorted_preds[:, -2]]
+        top_preds = probabilities[np.arange(
+            len(probabilities)), sorted_preds[:, -1]]
+        second_preds = probabilities[np.arange(
+            len(probabilities)), sorted_preds[:, -2]]
         difference = top_preds - second_preds
         return - difference
 
@@ -46,6 +49,7 @@ class EntropyStrategy(BaseUncertaintyStrategy):
         assert len(probabilities) == len(dataset)
         entropies = -np.sum(probabilities * np.log(probabilities), axis=1)
         return entropies
+
 
 class SemanticEntropyStrategy(BaseUncertaintyStrategy):
     @timeit

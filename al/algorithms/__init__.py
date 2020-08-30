@@ -1,8 +1,9 @@
 from .random import *
 from .uncertainty import *
-from .coreset import *
+from .kcenter_greedy import *
 from .al_for_deep_object_detection import DeepObjectDetectionStrategy
 from .deep_bayesian import *
+
 
 def get_strategy(strategy_name, **kwargs):
     if strategy_name == 'random_sampling':
@@ -14,7 +15,7 @@ def get_strategy(strategy_name, **kwargs):
     elif strategy_name == 'entropy_sampling':
         return EntropyStrategy()
     elif strategy_name == 'coreset':
-        return CoreSetStrategy(**kwargs)
+        return KCenterGreedyStrategy(**kwargs)
     elif strategy_name == 'al_for_deep_object_detection':
         return DeepObjectDetectionStrategy(**kwargs)
     elif strategy_name == 'bayesian_entropy_sampling':

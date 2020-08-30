@@ -22,8 +22,10 @@ class ActiveTrain():
         labeled_dataset = self.dataset.get_labeled()
         size_labeled = len(labeled_dataset)
         self.logger.debug(f'Training on {size_labeled} samples...')
-        self.learner.fit(labeled_dataset, *args, **kwargs)
-        return size_labeled
+        metrics_train = self.learner.fit(labeled_dataset, *args, **kwargs)
+        if metrics_train is None:
+            metrics_train = {}
+        return size_labeled, metrics_train
 
     @timeit
     def score(self, on_train=False, log_time={}):
@@ -70,7 +72,7 @@ class ActiveTrain():
         self.logger.info(f'Step number #{step}')
         self.logger.debug(f'Beginning training iteration...')
         train_parameters['log_time'] = log_time
-        size_labeled = self.train_iter(**train_parameters)
+        size_labeled, metrics_train = self.train_iter(**train_parameters)
         self.logger.debug(f'Done')
         if compute_score:
             scores = self.score(on_train=score_on_train, log_time=log_time)
@@ -80,10 +82,11 @@ class ActiveTrain():
         self.add_to_labeled(assets_per_query, log_time=log_time)
         scores['step'] = step
         scores['size_labeled'] = size_labeled
+        scores['train_metrics'] = metrics_train
         self.logger.debug('Done.')
         return scores
 
-    def train(self, train_parameters, n_iter, assets_per_query, compute_score, score_on_train, output_dir, *args, **kwargs):
+    def train(self, train_parameters, n_iter, assets_per_query=100, compute_score=True, score_on_train=False, output_dir='', *args, **kwargs):
         list_scores = []
         self.learner.val_batch_size = train_parameters.get(
             'val_batch_size', 256)

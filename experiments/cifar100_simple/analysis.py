@@ -12,10 +12,8 @@ from al.experiments import set_up_learner
 from al.helpers.logger import setup_logger
 
 
-
 EXPERIMENT_NAME = os.path.dirname(__file__)
 model_name = 'mobilenet'
-# model_name = 'simple_cnn'
 OUTPUT_DIR = f'{EXPERIMENT_NAME}/results'
 FIGURE_DIR = f'{EXPERIMENT_NAME}/figures'
 plot_dir = os.path.join(os.path.dirname(__file__), 'figures')
@@ -32,23 +30,27 @@ if analyze_queries:
     labels = np.array([x[1] for x in dataset.dataset])
     train_distribution = pd.value_counts(labels).sort_values()
     print('train_distribution', train_distribution)
-    pbar = tqdm.tqdm(total=config['experiment']['repeats']*len(config['experiment']['strategies'])*config['active_learning']['n_iter'])
+    pbar = tqdm.tqdm(total=config['experiment']['repeats']*len(
+        config['experiment']['strategies'])*config['active_learning']['n_iter'])
     list_data = []
     for i in range(config['experiment']['repeats']):
         for strategy in config['experiment']['strategies']:
-            queries_name=f'queries-{strategy}-{i}-{model_name}.txt'
+            queries_name = f'queries-{strategy}-{i}-{model_name}.txt'
             queries = pd.read_csv(f'{OUTPUT_DIR}/{queries_name}')
             for j, query in queries.iterrows():
                 pbar.update(1)
                 new_query = query.dropna().astype(int)
                 query_labels = labels[list(new_query)]
                 label_count = dict(pd.value_counts(query_labels).astype(int))
-                label_count = {str(k): label_count.get(k, 0) for k in range(100)}
-                data = {'repeat': i, 'strategy': strategy, 'query': j, **label_count}
+                label_count = {str(k): label_count.get(k, 0)
+                               for k in range(100)}
+                data = {'repeat': i, 'strategy': strategy,
+                        'query': j, **label_count}
                 list_data.append(data)
     pbar.close()
     df = pd.DataFrame(list_data).sort_index(axis=1)
-    correlation_with_query = np.zeros((100, len(config['experiment']['strategies'])))
+    correlation_with_query = np.zeros(
+        (100, len(config['experiment']['strategies'])))
     for i in range(100):
         df_i = df.loc[:, [str(i), 'query', 'repeat', 'strategy']]
         df_i = df_i.groupby(['strategy', 'repeat']).corr()
@@ -56,21 +58,23 @@ if analyze_queries:
         df_i = df_i.reset_index().groupby('strategy').mean()
         for j, strategy in enumerate(config['experiment']['strategies']):
             correlation_with_query[i, j] = df_i.loc[strategy, 'query']
-    
-    df_pair = pd.DataFrame(correlation_with_query, columns=config['experiment']['strategies'], index=np.arange(100))
+
+    df_pair = pd.DataFrame(
+        correlation_with_query, columns=config['experiment']['strategies'], index=np.arange(100))
     print(df_pair)
 
     plt.figure(num=0, figsize=(12, 5))
     for j, strategy in enumerate(config['experiment']['strategies']):
         sns.distplot(correlation_with_query[:, j], label=strategy, hist=False)
-    plt.title('Distribution of correlation between number \n of elements of class queried and query step')
+    plt.title(
+        'Distribution of correlation between number \n of elements of class queried and query step')
     plt.xlabel('Id of the class')
     plt.legend()
     plt.tight_layout()
     plt.show()
     plt.savefig(os.path.join(plot_dir, 'correlation_queries.png'))
 
-    plt.figure(num=1, figsize=(12, 8)) 
+    plt.figure(num=1, figsize=(12, 8))
     g = sns.pairplot(data=df_pair)
     for row_ax in g.axes:
         for ax in row_ax:
@@ -91,17 +95,16 @@ if analyze_results:
             step = step_result['step']
             data.append(
                 {'strategy': strategy,
-                'experiment': experiment_number,
-                'step': step,
-                **val_step_result})
+                 'experiment': experiment_number,
+                 'step': step,
+                 **val_step_result})
 
     df = pd.DataFrame(data)
 
     print(df)
 
-    df = df.loc[~df.strategy.isin(['coreset', 'margin_sampling', 'bayesian_bald_sampling'])]
-
-    
+    df = df.loc[~df.strategy.isin(
+        ['coreset', 'margin_sampling', 'bayesian_bald_sampling'])]
 
     plt.figure(num=0, figsize=(12, 5))
     sns.lineplot(x='step', y='accuracy', hue='strategy', data=df)

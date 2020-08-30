@@ -20,7 +20,8 @@ from al.helpers.logger import setup_logger
 DATASET = 'pascalvoc_detection'
 
 FOLDER_PATH = os.path.dirname(__file__)
-OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(__file__, FOLDER_PATH, logging_lvl=20)
+OUTPUT_DIR, FIGURE_DIR, logger, logger_name = set_up_experiment(
+    __file__, FOLDER_PATH, logging_lvl=10)
 
 logger.info('-------------------------')
 logger.info('--LAUNCHING EXPERIMENTS--')
@@ -40,12 +41,14 @@ for i in range(config['experiment']['repeats']):
     logger.info(f'--------ROUND OF TRAININGS NUMBER #{i+1}--------')
     logger.info('---------------------------')
     for strategy in config['experiment']['strategies']:
-        dataset, learner = setupper(config, OUTPUT_DIR, logger, device=1, queries_name=f'queries-{strategy}-{i}-{model_name}.txt')
+        dataset, learner = setupper(config, OUTPUT_DIR, logger, device=1,
+                                    queries_name=f'queries-{strategy}-{i}-{model_name}.txt')
         logger.info('---------------------------')
         logger.info(f'----STRATEGY : {strategy}----')
         logger.info('---------------------------')
         trainer = ActiveTrain(learner, dataset, strategy, logger_name)
-        scores = trainer.train(config['train_parameters'], **config['active_learning'])
+        scores = trainer.train(
+            config['train_parameters'], **config['active_learning'])
         score_data[(strategy, i)] = scores
         logger.info(f'----DONE----\n')
     logger.info('---------------------------')

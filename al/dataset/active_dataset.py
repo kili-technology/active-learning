@@ -15,7 +15,7 @@ class MaskDataset(Dataset):
 
     def __len__(self):
         return len(self.indices)
-    
+
     def __getitem__(self, i):
         return self.dataset[self.indices[i]]
 
@@ -26,11 +26,14 @@ class ActiveDataset():
         self.dataset = dataset
         self.masklabeled = np.array([False for i in range(len(dataset))])
         self.update_labeled_list()
-        init_list = list(np.random.permutation(np.arange(len(dataset)))[:n_init])
-        self.output_dir = output_dir
-        self.queries_file = os.path.join(output_dir, queries_name)
-        if os.path.exists(self.queries_file):
-            os.remove(self.queries_file)
+        init_list = list(np.random.permutation(
+            np.arange(len(dataset)))[:n_init])
+        self.save_queries = not output_dir is None
+        if self.save_queries:
+            self.output_dir = output_dir
+            self.queries_file = os.path.join(output_dir, queries_name)
+            if os.path.exists(self.queries_file):
+                os.remove(self.queries_file)
         self.add_to_labeled(init_list)
 
     def _get_initial_dataset(self):
@@ -40,7 +43,8 @@ class ActiveDataset():
         raise NotImplementedError
 
     def update_labeled_list(self):
-        self.labeled = [i for i, labeled in enumerate(self.masklabeled) if labeled]
+        self.labeled = [i for i, labeled in enumerate(
+            self.masklabeled) if labeled]
         self.unlabeled_to_all = {}
         j = 0
         for i, labeled in enumerate(self.masklabeled):
@@ -52,11 +56,13 @@ class ActiveDataset():
         return MaskDataset(self.dataset, self.labeled)
 
     def get_unlabeled(self):
-        unlabeled_indices = [i for i, labeled in enumerate(self.masklabeled) if not labeled]
+        unlabeled_indices = [i for i, labeled in enumerate(
+            self.masklabeled) if not labeled]
         return MaskDataset(self.dataset, unlabeled_indices)
 
     def add_to_labeled(self, indices):
-        save_to_csv(self.queries_file, indices)
+        if self.save_queries:
+            save_to_csv(self.queries_file, indices)
         self.masklabeled[np.array(indices)] = True
         self.update_labeled_list()
 

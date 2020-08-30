@@ -7,23 +7,28 @@ from al.dataset.mnist import MnistDataset
 from al.dataset.cifar import Cifar100Dataset
 
 
-def set_up_mnist(config, output_dir, logger, device=0, queries_name='queries.txt'):
-    train_size, val_size, init_size = config['dataset']['train_size'], config['dataset']['val_size'], config['active_learning']['init_size']
-    index_validation = np.arange(val_size)
-    index_train = np.arange(train_size)
+def set_up_mnist(config, output_dir, logger, device=0, queries_name='queries.txt', index_train=None, index_validation=None):
+    train_size, val_size, init_size = config['dataset']['train_size'], config[
+        'dataset']['val_size'], config['active_learning']['init_size']
+    if index_validation is None:
+        index_validation = np.arange(val_size)
+    if index_train is None:
+        index_train = np.arange(train_size)
     logger_name = config['experiment']['logger_name']
     logger.info('Setting up datasets...')
 
-    dataset = MnistDataset(index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name)
-    test_dataset = MnistDataset(index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name, train=False)
+    dataset = MnistDataset(index_train, n_init=init_size,
+                           output_dir=output_dir, queries_name=queries_name)
+    test_dataset = MnistDataset(index_validation, n_init=init_size,
+                                output_dir=output_dir, queries_name=queries_name, train=False)
     dataset.set_validation_dataset(test_dataset.get_dataset(index_validation))
 
     logger.info('Setting up models...')
-
+    n_classes = config['experiment'].get('n_class', 10)
     if 'simple_cnn' in config['experiment']['model']:
-        model = ConvModel()
+        model = ConvModel(classes=n_classes)
     elif 'simplenet' in config['experiment']['model']:
-        model = simplenet()
+        model = simplenet(classes=n_classes)
     learner = MnistLearner(model, logger_name=logger_name, device=device)
     return dataset, learner
 
@@ -35,7 +40,8 @@ def set_up_cifar(config, output_dir, logger, device=0, queries_name='queries.txt
     index_train = np.arange(config['dataset']['train_size'])
     logger_name = config['experiment']['logger_name']
 
-    dataset = Cifar100Dataset(index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name)
+    dataset = Cifar100Dataset(
+        index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name)
     test_dataset = dataset._get_initial_dataset(train=False)
     dataset.set_validation_dataset(test_dataset)
 
@@ -49,5 +55,6 @@ def set_up_cifar(config, output_dir, logger, device=0, queries_name='queries.txt
         model = mobilenet_v2(config)
     elif 'nasnet' in config['experiment']['model']:
         model = nasnet(config)
-    learner = CifarLearner(model, cifar100=True, logger_name=logger_name, device=device)
+    learner = CifarLearner(model, cifar100=True,
+                           logger_name=logger_name, device=device)
     return dataset, learner

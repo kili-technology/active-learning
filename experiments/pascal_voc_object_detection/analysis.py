@@ -6,6 +6,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# 30 : 0.365
+# 20 : 0.303
+# 10 : 0.165
+# 5 : 0.097
 
 
 EXPERIMENT_NAME = 'pascal_voc_object_detection'
@@ -26,10 +30,10 @@ for (strategy, experiment_number), scores_experiment in scores.items():
         step = step_result['step']
         data.append(
             {'strategy': strategy,
-            'experiment': experiment_number,
-            'step': step,
-            **val_step_result,
-            **val_step_result['metrics']})
+             'experiment': experiment_number,
+             'step': step,
+             **val_step_result,
+             **val_step_result['metrics']})
 
 df = pd.DataFrame(data)
 

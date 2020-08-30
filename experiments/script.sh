@@ -25,4 +25,9 @@ then
     cd pascal_voc_segmentation
     rm -f nohup.out
     nohup python pascal_voc.py &
+elif [ $1 == 'use_case' ]
+then
+    cd siim-isic-melanoma-classification
+    rm -f nohup.out
+    nohup python main.py &
 fi

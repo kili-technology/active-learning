@@ -2,8 +2,8 @@ experiment:
   strategy: 'al_for_deep_object_detection'
   save_results: True
 active_learning:
-  assets_per_query: 10000
-  n_iter: 3
+  assets_per_query: 5000
+  n_iter: 6
   init_size: 10000
   # init_size: 20
   compute_score: True
@@ -11,7 +11,7 @@ active_learning:
 train_parameters:
   batch_size: 16
   val_batch_size: 64
-  iterations: 2500
+  iterations: 10000
   # iterations: 10
   learning_rate: 0.001
   shuffle: True

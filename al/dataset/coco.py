@@ -18,17 +18,18 @@ class COCOObjectDataset(ActiveDataset):
                    'sheep', 'sofa', 'train', 'tvmonitor')
 
     def __init__(self, indices, n_init=100, output_dir=None, train=True, year='2012', cfg=None, queries_name='queries.txt'):
-        self.data_dir = os.path.join(DATA_ROOT, f'VOCdevkit/VOC{year}')
         self.cfg = cfg
         self.init_dataset = self._get_initial_dataset(train, year)
-        super().__init__(self.get_dataset(indices), n_init=n_init, output_dir=output_dir, queries_name=queries_name)
+        super().__init__(self.get_dataset(indices), n_init=n_init,
+                         output_dir=output_dir, queries_name=queries_name)
 
     def _get_initial_dataset(self, train=True, year='2012'):
         transform, target_transform = get_transforms(self.cfg, train)
         image_set = 'train' if train else 'val'
         coco_root = os.getenv('COCO_ROOT')
         data_dir = os.path.join(coco_root, f'{image_set}2014')
-        ann_file = os.path.join(coco_root, f'annotations/instances_{image_set}2014.json')
+        ann_file = os.path.join(
+            coco_root, f'annotations/instances_{image_set}2014.json')
         return COCODataset(data_dir, ann_file, transform=transform, target_transform=target_transform, remove_empty=train)
 
     def get_dataset(self, indices):
@@ -67,8 +68,10 @@ class COCODataset(torch.utils.data.Dataset):
             # when testing, all images used.
             self.ids = list(self.coco.imgs.keys())
         coco_categories = sorted(self.coco.getCatIds())
-        self.coco_id_to_contiguous_id = {coco_id: i + 1 for i, coco_id in enumerate(coco_categories)}
-        self.contiguous_id_to_coco_id = {v: k for k, v in self.coco_id_to_contiguous_id.items()}
+        self.coco_id_to_contiguous_id = {
+            coco_id: i + 1 for i, coco_id in enumerate(coco_categories)}
+        self.contiguous_id_to_coco_id = {
+            v: k for k, v in self.coco_id_to_contiguous_id.items()}
 
     def __getitem__(self, index):
         image_id = self.ids[index]
@@ -96,8 +99,10 @@ class COCODataset(torch.utils.data.Dataset):
         ann = self.coco.loadAnns(ann_ids)
         # filter crowd annotations
         ann = [obj for obj in ann if obj["iscrowd"] == 0]
-        boxes = np.array([self._xywh2xyxy(obj["bbox"]) for obj in ann], np.float32).reshape((-1, 4))
-        labels = np.array([self.coco_id_to_contiguous_id[obj["category_id"]] for obj in ann], np.int64).reshape((-1,))
+        boxes = np.array([self._xywh2xyxy(obj["bbox"])
+                          for obj in ann], np.float32).reshape((-1, 4))
+        labels = np.array([self.coco_id_to_contiguous_id[obj["category_id"]]
+                           for obj in ann], np.int64).reshape((-1,))
         # remove invalid boxes
         keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
         boxes = boxes[keep]

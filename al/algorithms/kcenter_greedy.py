@@ -5,12 +5,12 @@ from .baseline import Strategy
 from ..helpers.time import timeit
 
 
-class CoreSetStrategy(Strategy):
+class KCenterGreedyStrategy(Strategy):
 
     def __init__(self, metric='euclidean', **kwargs):
         super().__init__()
         self.metric = metric
-        
+
     @timeit
     def score_dataset(self, dataset, log_time={}):
         return None
@@ -27,14 +27,14 @@ class CoreSetStrategy(Strategy):
             self.min_distances = None
         if only_new:
             cluster_centers = [d for d in cluster_centers
-                                if d not in self.already_selected]
+                               if d not in self.already_selected]
         if cluster_centers:
             # Update min_distances for all examples given new cluster center.
             x = self.features[cluster_centers]
             dist = pairwise_distances(self.features, x, metric=self.metric)
 
             if self.min_distances is None:
-                self.min_distances = np.min(dist, axis=1).reshape(-1,1)
+                self.min_distances = np.min(dist, axis=1).reshape(-1, 1)
             else:
                 self.min_distances = np.minimum(self.min_distances, dist)
 
@@ -51,7 +51,8 @@ class CoreSetStrategy(Strategy):
         indices of points selected to minimize distance to cluster centers
         """
 
-        self.update_distances(already_selected, only_new=True, reset_dist=False)
+        self.update_distances(
+            already_selected, only_new=True, reset_dist=False)
 
         new_batch = []
 
@@ -68,7 +69,7 @@ class CoreSetStrategy(Strategy):
             self.update_distances([ind], only_new=True, reset_dist=False)
             new_batch.append(ind)
         print('Maximum distance from cluster centers is %0.2f'
-            % max(self.min_distances))
+              % max(self.min_distances))
 
         self.already_selected = already_selected
 

@@ -3,6 +3,8 @@ From SSD
 """
 
 from __future__ import division
+from torch.optim.lr_scheduler import _LRScheduler
+from bisect import bisect_right
 import os
 import json
 import datetime
@@ -23,10 +25,12 @@ import numpy as np
 from numpy import random
 import cv2
 import torch
-from torch.utils.data.dataloader import default_collate
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+from torch.utils.data.dataloader import default_collate
+from torch.optim.lr_scheduler import _LRScheduler
+
 
 from .mobilenet import mobilenet_v2_backbone
 from .vgg import vgg
@@ -38,6 +42,7 @@ else:
     sys.exit(-1)
 
 MEASURE_TIME = False
+
 
 class SSDDetector(nn.Module):
     def __init__(self, cfg, backbone):
@@ -67,6 +72,7 @@ def build_backbone(cfg, backbone):
     elif backbone == 'vgg':
         return vgg(cfg)
 
+
 class MultiBoxLoss(nn.Module):
     def __init__(self, neg_pos_ratio):
         """Implement SSD MultiBox Loss.
@@ -93,12 +99,14 @@ class MultiBoxLoss(nn.Module):
             mask = hard_negative_mining(loss, labels, self.neg_pos_ratio)
 
         confidence = confidence[mask, :]
-        classification_loss = F.cross_entropy(confidence.view(-1, num_classes), labels[mask], reduction='sum')
+        classification_loss = F.cross_entropy(
+            confidence.view(-1, num_classes), labels[mask], reduction='sum')
 
         pos_mask = labels > 0
         predicted_locations = predicted_locations[pos_mask, :].view(-1, 4)
         gt_locations = gt_locations[pos_mask, :].view(-1, 4)
-        smooth_l1_loss = F.smooth_l1_loss(predicted_locations, gt_locations, reduction='sum')
+        smooth_l1_loss = F.smooth_l1_loss(
+            predicted_locations, gt_locations, reduction='sum')
         num_pos = gt_locations.size(0)
         return smooth_l1_loss / num_pos, classification_loss / num_pos
 
@@ -110,8 +118,10 @@ class BoxPredictor(nn.Module):
         self.cls_headers = nn.ModuleList()
         self.reg_headers = nn.ModuleList()
         for level, (boxes_per_location, out_channels) in enumerate(zip(cfg.MODEL.PRIORS.BOXES_PER_LOCATION, cfg.MODEL.BACKBONE.OUT_CHANNELS)):
-            self.cls_headers.append(self.cls_block(level, out_channels, boxes_per_location))
-            self.reg_headers.append(self.reg_block(level, out_channels, boxes_per_location))
+            self.cls_headers.append(self.cls_block(
+                level, out_channels, boxes_per_location))
+            self.reg_headers.append(self.reg_block(
+                level, out_channels, boxes_per_location))
         self.reset_parameters()
 
     def cls_block(self, level, out_channels, boxes_per_location):
@@ -130,15 +140,18 @@ class BoxPredictor(nn.Module):
         cls_logits = []
         bbox_pred = []
         for feature, cls_header, reg_header in zip(features, self.cls_headers, self.reg_headers):
-            cls_logits.append(cls_header(feature).permute(0, 2, 3, 1).contiguous())
-            bbox_pred.append(reg_header(feature).permute(0, 2, 3, 1).contiguous())
+            cls_logits.append(cls_header(
+                feature).permute(0, 2, 3, 1).contiguous())
+            bbox_pred.append(reg_header(feature).permute(
+                0, 2, 3, 1).contiguous())
 
         batch_size = features[0].shape[0]
-        cls_logits = torch.cat([c.view(c.shape[0], -1) for c in cls_logits], dim=1).view(batch_size, -1, self.cfg.MODEL.NUM_CLASSES)
-        bbox_pred = torch.cat([l.view(l.shape[0], -1) for l in bbox_pred], dim=1).view(batch_size, -1, 4)
+        cls_logits = torch.cat([c.view(c.shape[0], -1) for c in cls_logits],
+                               dim=1).view(batch_size, -1, self.cfg.MODEL.NUM_CLASSES)
+        bbox_pred = torch.cat([l.view(l.shape[0], -1)
+                               for l in bbox_pred], dim=1).view(batch_size, -1, 4)
 
         return cls_logits, bbox_pred
-
 
 
 class SeparableConv2d(nn.Module):
@@ -150,7 +163,8 @@ class SeparableConv2d(nn.Module):
                       groups=in_channels, stride=stride, padding=padding),
             nn.BatchNorm2d(in_channels),
             ReLU(),
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+            nn.Conv2d(in_channels=in_channels,
+                      out_channels=out_channels, kernel_size=1),
         )
 
     def forward(self, x):
@@ -191,7 +205,8 @@ class SSDBoxHead(nn.Module):
         super().__init__()
         self.cfg = cfg
         self.predictor = make_box_predictor(cfg)
-        self.loss_evaluator = MultiBoxLoss(neg_pos_ratio=cfg.MODEL.NEG_POS_RATIO)
+        self.loss_evaluator = MultiBoxLoss(
+            neg_pos_ratio=cfg.MODEL.NEG_POS_RATIO)
         self.post_processor = PostProcessor(cfg)
         self.priors = None
 
@@ -204,7 +219,8 @@ class SSDBoxHead(nn.Module):
 
     def _forward_train(self, cls_logits, bbox_pred, targets):
         gt_boxes, gt_labels = targets['boxes'], targets['labels']
-        reg_loss, cls_loss = self.loss_evaluator(cls_logits, bbox_pred, gt_labels, gt_boxes)
+        reg_loss, cls_loss = self.loss_evaluator(
+            cls_logits, bbox_pred, gt_labels, gt_boxes)
         loss_dict = dict(
             reg_loss=reg_loss,
             cls_loss=cls_loss,
@@ -262,7 +278,8 @@ def convert_locations_to_boxes(locations, priors, center_variance,
     if priors.dim() + 1 == locations.dim():
         priors = priors.unsqueeze(0)
     return torch.cat([
-        locations[..., :2] * center_variance * priors[..., 2:] + priors[..., :2],
+        locations[..., :2] * center_variance *
+        priors[..., 2:] + priors[..., :2],
         torch.exp(locations[..., 2:] * size_variance) * priors[..., 2:]
     ], dim=locations.dim() - 1)
 
@@ -272,8 +289,10 @@ def convert_boxes_to_locations(center_form_boxes, center_form_priors, center_var
     if center_form_priors.dim() + 1 == center_form_boxes.dim():
         center_form_priors = center_form_priors.unsqueeze(0)
     return torch.cat([
-        (center_form_boxes[..., :2] - center_form_priors[..., :2]) / center_form_priors[..., 2:] / center_variance,
-        torch.log(center_form_boxes[..., 2:] / center_form_priors[..., 2:]) / size_variance
+        (center_form_boxes[..., :2] - center_form_priors[...,
+                                                         :2]) / center_form_priors[..., 2:] / center_variance,
+        torch.log(center_form_boxes[..., 2:] /
+                  center_form_priors[..., 2:]) / size_variance
     ], dim=center_form_boxes.dim() - 1)
 
 
@@ -433,7 +452,6 @@ class Container:
         return self._data_dict.__repr__()
 
 
-
 def nms(boxes, scores, nms_thresh):
     """ Performs non-maximum suppression, run on GPU or CPU according to
     boxes's device.
@@ -487,6 +505,7 @@ def batched_nms(boxes, scores, idxs, iou_threshold):
     keep = nms(boxes_for_nms, scores, iou_threshold)
     return keep
 
+
 class PostProcessor:
     def __init__(self, cfg):
         super().__init__()
@@ -501,12 +520,14 @@ class PostProcessor:
             batch_size = batches_scores.size(0)
             results = []
             for batch_id in range(batch_size):
-                scores, boxes = batches_scores[batch_id], batches_boxes[batch_id]  # (N, #CLS) (N, 4)
+                # (N, #CLS) (N, 4)
+                scores, boxes = batches_scores[batch_id], batches_boxes[batch_id]
                 num_boxes = scores.shape[0]
                 num_classes = scores.shape[1]
                 if MEASURE_TIME:
                     print(f'Initial number of boxes : {num_boxes}', end='\n')
-                boxes = boxes.view(num_boxes, 1, 4).expand(num_boxes, num_classes, 4)
+                boxes = boxes.view(num_boxes, 1, 4).expand(
+                    num_boxes, num_classes, 4)
                 labels = torch.arange(num_classes, device=device)
                 labels = labels.view(1, num_classes).expand_as(scores)
 
@@ -521,7 +542,8 @@ class PostProcessor:
                 labels = labels.reshape(-1)
 
                 # remove low scoring boxes
-                indices = torch.nonzero(scores > self.cfg.TEST.CONFIDENCE_THRESHOLD).squeeze(1)
+                indices = torch.nonzero(
+                    scores > self.cfg.TEST.CONFIDENCE_THRESHOLD).squeeze(1)
                 boxes, scores, labels = boxes[indices], scores[indices], labels[indices]
 
                 boxes[:, 0::2] *= self.width
@@ -530,14 +552,16 @@ class PostProcessor:
                 if MEASURE_TIME:
                     t = time.time()
                     print(f'Number of boxes : {len(boxes)}', end='\n')
-                keep = batched_nms(boxes, scores, labels, self.cfg.TEST.NMS_THRESHOLD)
+                keep = batched_nms(boxes, scores, labels,
+                                   self.cfg.TEST.NMS_THRESHOLD)
                 if MEASURE_TIME:
                     print(f'NMS took {(time.time() - t):.2f}s')
                 # keep only topk scoring predictions
                 keep = keep[:self.cfg.TEST.MAX_PER_IMAGE]
                 boxes, scores, labels = boxes[keep], scores[keep], labels[keep]
 
-                container = Container(boxes=boxes, labels=labels, scores=scores)
+                container = Container(
+                    boxes=boxes, labels=labels, scores=scores)
                 container.img_width = self.width
                 container.img_height = self.height
                 results.append(container)
@@ -548,12 +572,15 @@ class PostProcessor:
             batch_size = batches_scores.size(0)
             results = []
             for batch_id in range(batch_size):
-                scores, boxes, logits = batches_scores[batch_id], batches_boxes[batch_id], batches_logits[batch_id]  # (N, #CLS) (N, 4)
+                # (N, #CLS) (N, 4)
+                scores, boxes, logits = batches_scores[batch_id], batches_boxes[batch_id], batches_logits[batch_id]
                 num_boxes = scores.shape[0]
                 num_classes = scores.shape[1]
 
-                boxes = boxes.view(num_boxes, 1, 4).expand(num_boxes, num_classes, 4)
-                logits = logits.view(num_boxes, 1, num_classes).expand(num_boxes, num_classes, num_classes)
+                boxes = boxes.view(num_boxes, 1, 4).expand(
+                    num_boxes, num_classes, 4)
+                logits = logits.view(num_boxes, 1, num_classes).expand(
+                    num_boxes, num_classes, num_classes)
                 labels = torch.arange(num_classes, device=device)
                 labels = labels.view(1, num_classes).expand_as(scores)
 
@@ -570,23 +597,25 @@ class PostProcessor:
                 logits = logits.reshape(-1, num_classes)
 
                 # remove low scoring boxes
-                indices = torch.nonzero(scores > self.cfg.TEST.CONFIDENCE_THRESHOLD).squeeze(1)
+                indices = torch.nonzero(
+                    scores > self.cfg.TEST.CONFIDENCE_THRESHOLD).squeeze(1)
                 boxes, scores, labels, logits = boxes[indices], scores[indices], labels[indices], logits[indices]
 
                 boxes[:, 0::2] *= self.width
                 boxes[:, 1::2] *= self.height
 
-                keep = batched_nms(boxes, scores, labels, self.cfg.TEST.NMS_THRESHOLD)
+                keep = batched_nms(boxes, scores, labels,
+                                   self.cfg.TEST.NMS_THRESHOLD)
                 # keep only topk scoring predictions
                 keep = keep[:self.cfg.TEST.MAX_PER_IMAGE]
                 boxes, scores, labels, logits = boxes[keep], scores[keep], labels[keep], logits[keep]
 
-                container = Container(boxes=boxes, labels=labels, scores=scores, logits=logits)
+                container = Container(
+                    boxes=boxes, labels=labels, scores=scores, logits=logits)
                 container.img_width = self.width
                 container.img_height = self.height
                 results.append(container)
             return results
-
 
 
 class PriorBox:
@@ -642,7 +671,8 @@ class PriorBox:
 class SSDTargetTransform:
     def __init__(self, center_form_priors, center_variance, size_variance, iou_threshold):
         self.center_form_priors = center_form_priors
-        self.corner_form_priors = center_form_to_corner_form(center_form_priors)
+        self.corner_form_priors = center_form_to_corner_form(
+            center_form_priors)
         self.center_variance = center_variance
         self.size_variance = size_variance
         self.iou_threshold = iou_threshold
@@ -653,12 +683,12 @@ class SSDTargetTransform:
         if type(gt_labels) is np.ndarray:
             gt_labels = torch.from_numpy(gt_labels)
         boxes, labels = assign_priors(gt_boxes, gt_labels,
-                                                self.corner_form_priors, self.iou_threshold)
+                                      self.corner_form_priors, self.iou_threshold)
         boxes = corner_form_to_center_form(boxes)
-        locations = convert_boxes_to_locations(boxes, self.center_form_priors, self.center_variance, self.size_variance)
-       
-        return locations, labels
+        locations = convert_boxes_to_locations(
+            boxes, self.center_form_priors, self.center_variance, self.size_variance)
 
+        return locations, labels
 
 
 def intersect(box_a, box_b):
@@ -947,7 +977,8 @@ class RandomSampleCrop(object):
                 top = random.uniform(height - h)
 
                 # convert to integer rect x1,y1,x2,y2
-                rect = np.array([int(left), int(top), int(left + w), int(top + h)])
+                rect = np.array(
+                    [int(left), int(top), int(left + w), int(top + h)])
 
                 # calculate IoU (jaccard overlap) b/t the cropped and gt boxes
                 overlap = jaccard_numpy(boxes, rect)
@@ -958,7 +989,7 @@ class RandomSampleCrop(object):
 
                 # cut the crop from the image
                 current_image = current_image[rect[1]:rect[3], rect[0]:rect[2],
-                                :]
+                                              :]
 
                 # keep overlap with gt box IF center in sampled patch
                 centers = (boxes[:, :2] + boxes[:, 2:]) / 2.0
@@ -1014,7 +1045,7 @@ class Expand(object):
             dtype=image.dtype)
         expand_image[:, :, :] = self.mean
         expand_image[int(top):int(top + height),
-        int(left):int(left + width)] = image
+                     int(left):int(left + width)] = image
         image = expand_image
 
         boxes = boxes.copy()
@@ -1084,7 +1115,6 @@ class PhotometricDistort(object):
         return self.rand_light_noise(im, boxes, labels)
 
 
-
 def build_transforms(cfg, is_train=True):
     if is_train:
         transform = [
@@ -1107,6 +1137,7 @@ def build_transforms(cfg, is_train=True):
     transform = Compose(transform)
     return transform
 
+
 def build_target_transform(cfg):
     transform = SSDTargetTransform(PriorBox(cfg)(),
                                    cfg.MODEL.CENTER_VARIANCE,
@@ -1127,13 +1158,14 @@ class BatchCollator:
         if self.is_train:
             list_targets = transposed_batch[1]
             targets = Container(
-                {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
+                {key: default_collate([d[key] for d in list_targets])
+                 for key in list_targets[0]}
             )
         else:
             targets = None
         return images, targets, img_ids
 
-    
+
 class BatchCollatorSemantic:
     def __init__(self, is_train=True):
         self.is_train = is_train
@@ -1160,17 +1192,20 @@ def get_transforms(cfg, is_train):
     target_transform = build_target_transform(cfg) if is_train else None
     return train_transform, target_transform
 
+
 def get_transforms_semantic(cfg):
     train_transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize(cfg.INPUT.IMAGE_SIZE),
         torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        torchvision.transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
     target_transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize(cfg.INPUT.IMAGE_SIZE),
         torchvision.transforms.ToTensor(),
     ])
     return train_transform, target_transform
+
 
 def voc_evaluation(dataset, predictions, output_dir, iteration=None):
     voc_dataset = dataset
@@ -1195,7 +1230,8 @@ def voc_evaluation(dataset, predictions, output_dir, iteration=None):
 
         img_info = voc_dataset.get_img_info(i)
         prediction = predictions[i]
-        prediction = prediction.resize((img_info['width'], img_info['height'])).numpy()
+        prediction = prediction.resize(
+            (img_info['width'], img_info['height'])).numpy()
         boxes, labels, scores = prediction['boxes'], prediction['labels'], prediction['scores']
 
         pred_boxes_list.append(boxes)
@@ -1228,7 +1264,8 @@ def coco_evaluation(dataset, predictions, output_dir, iteration=None):
     for i in predictions.keys():
         prediction = predictions[i]
         img_info = coco_dataset.get_img_info(i)
-        prediction = prediction.resize((img_info['width'], img_info['height'])).numpy()
+        prediction = prediction.resize(
+            (img_info['width'], img_info['height'])).numpy()
         boxes, labels, scores = prediction['boxes'], prediction['labels'], prediction['scores']
 
         image_id, annotation = coco_dataset.get_annotation(i)
@@ -1244,7 +1281,8 @@ def coco_evaluation(dataset, predictions, output_dir, iteration=None):
                 {
                     "image_id": image_id,
                     "category_id": class_mapper[labels[k]],
-                    "bbox": [box[0], box[1], box[2] - box[0], box[3] - box[1]],  # to xywh format
+                    # to xywh format
+                    "bbox": [box[0], box[1], box[2] - box[0], box[3] - box[1]],
                     "score": scores[k],
                 }
                 for k, box in enumerate(boxes)
@@ -1608,3 +1646,39 @@ def calc_detection_voc_ap(prec, rec, use_07_metric=False):
             ap[l] = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
 
     return ap
+
+
+class WarmupMultiStepLR(_LRScheduler):
+    def __init__(self, optimizer, milestones, gamma=0.1, warmup_factor=1.0 / 3,
+                 warmup_iters=500, last_epoch=-1):
+        if not list(milestones) == sorted(milestones):
+            raise ValueError(
+                "Milestones should be a list of" " increasing integers. Got {}",
+                milestones,
+            )
+
+        self.milestones = milestones
+        self.gamma = gamma
+        self.warmup_factor = warmup_factor
+        self.warmup_iters = warmup_iters
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self):
+        warmup_factor = 1
+        if self.last_epoch < self.warmup_iters:
+            alpha = float(self.last_epoch) / self.warmup_iters
+            warmup_factor = self.warmup_factor * (1 - alpha) + alpha
+        return [
+            base_lr
+            * warmup_factor
+            * self.gamma ** bisect_right(self.milestones, self.last_epoch)
+            for base_lr in self.base_lrs
+        ]
+
+
+def make_lr_scheduler(optimizer):
+    return WarmupMultiStepLR(optimizer=optimizer,
+                             milestones=[80000, 100000],
+                             gamma=0.1,
+                             warmup_factor=0.33,
+                             warmup_iters=500)

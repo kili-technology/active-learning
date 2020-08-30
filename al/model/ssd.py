@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import BatchSampler, SequentialSampler
 
 from .active_model import ActiveLearner
-from .model_zoo.ssd import BatchCollator, voc_evaluation, coco_evaluation
+from .model_zoo.ssd import BatchCollator, voc_evaluation, coco_evaluation, make_lr_scheduler
 from ..helpers.time import timeit
 from ..helpers.samplers import IterationBasedBatchSampler
 
@@ -80,8 +80,9 @@ class SSDLearner(ActiveLearner):
         if self.cuda_available:
             self.model.cuda()
         self.model.train()
-        optimizer = torch.optim.SGD(self.model.parameters(
-        ), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
+        optimizer = torch.optim.SGD(self.model.parameters(),
+                                    lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
+        scheduler = make_lr_scheduler(optimizer)
         batch_sampler = BatchSampler(
             sampler=self.get_base_sampler(len(dataset), shuffle), batch_size=batch_size, drop_last=True)
         batch_sampler = IterationBasedBatchSampler(
@@ -100,6 +101,7 @@ class SSDLearner(ActiveLearner):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            scheduler.step()
 
     def score(self, dataset, batch_size=64, *args, **kwargs):
         self.model.eval()
