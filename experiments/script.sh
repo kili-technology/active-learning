@@ -5,11 +5,16 @@ then
     cd mnist_simple
     rm -f nohup.out
     nohup python mnist.py &
-elif [ $1 == 'cifar' ]
+elif [ $1 == 'cifar100' ]
 then
     cd cifar100_simple
     rm -f nohup.out
     nohup python cifar100.py &
+elif [ $1 == 'cifar10' ]
+then
+    cd cifar10_simple
+    rm -f nohup.out
+    nohup python cifar.py &
 elif [ $1 == 'pascal_object' ]
 then
     cd pascal_voc_object_detection

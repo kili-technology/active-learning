@@ -3,6 +3,7 @@ from .uncertainty import *
 from .kcenter_greedy import *
 from .al_for_deep_object_detection import DeepObjectDetectionStrategy
 from .deep_bayesian import *
+from .diverse_mini_batch import *
 
 
 def get_strategy(strategy_name, **kwargs):
@@ -23,4 +24,6 @@ def get_strategy(strategy_name, **kwargs):
     elif strategy_name == 'bayesian_bald_sampling':
         return BayesianBALDStrategy(**kwargs)
     elif strategy_name == 'semantic_entropy_sampling':
-        return SemanticEntropyStrategy()
+        return SemanticEntropyStrategy(**kwargs)
+    elif strategy_name == 'diverse_mini_batch_sampling':
+        return DiverseMiniBatchStrategy(**kwargs)

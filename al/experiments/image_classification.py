@@ -4,7 +4,7 @@ from al.model.model_zoo import *
 from al.model.mnist import MnistLearner
 from al.model.cifar import CifarLearner
 from al.dataset.mnist import MnistDataset
-from al.dataset.cifar import Cifar100Dataset
+from al.dataset.cifar import CifarDataset
 
 
 def set_up_mnist(config, output_dir, logger, device=0, queries_name='queries.txt', index_train=None, index_validation=None):
@@ -40,8 +40,8 @@ def set_up_cifar(config, output_dir, logger, device=0, queries_name='queries.txt
     index_train = np.arange(config['dataset']['train_size'])
     logger_name = config['experiment']['logger_name']
 
-    dataset = Cifar100Dataset(
-        index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name)
+    dataset = CifarDataset(
+        index_train, n_init=init_size, output_dir=output_dir, queries_name=queries_name, size=config['experiment']['size'])
     test_dataset = dataset._get_initial_dataset(train=False)
     dataset.set_validation_dataset(test_dataset)
 
@@ -55,6 +55,6 @@ def set_up_cifar(config, output_dir, logger, device=0, queries_name='queries.txt
         model = mobilenet_v2(config)
     elif 'nasnet' in config['experiment']['model']:
         model = nasnet(config)
-    learner = CifarLearner(model, cifar100=True,
+    learner = CifarLearner(model, cifar100=config['experiment']['size'] == 100,
                            logger_name=logger_name, device=device)
     return dataset, learner

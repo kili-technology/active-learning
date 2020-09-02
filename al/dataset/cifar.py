@@ -29,12 +29,13 @@ class TransformedDataset(Dataset):
         return x, y
 
 
+class CifarDataset(ActiveDataset):
 
-class Cifar100Dataset(ActiveDataset):
-
-    def __init__(self, indices, n_init=100, output_dir=None, train=True, queries_name='queries.txt'):
+    def __init__(self, indices, n_init=100, output_dir=None, train=True, queries_name='queries.txt', size=100):
+        self.size = size
         self.init_dataset = self._get_initial_dataset(train)
-        super().__init__(self.get_dataset(indices), n_init=n_init, output_dir=output_dir, queries_name=queries_name)
+        super().__init__(self.get_dataset(indices), n_init=n_init,
+                         output_dir=output_dir, queries_name=queries_name)
 
     def _get_initial_dataset(self, train=True):
         if train:
@@ -49,7 +50,12 @@ class Cifar100Dataset(ActiveDataset):
                 transforms.ToTensor(),
                 transforms.Normalize(CIFAR100_TRAIN_MEAN, CIFAR100_TRAIN_STD)
             ])
-        return torchvision.datasets.CIFAR100(
+        if self.size == 100:
+            return torchvision.datasets.CIFAR100(
+                root=DATA_ROOT, train=train, transform=transform,
+                target_transform=None, download=True)
+        else:
+            return torchvision.datasets.CIFAR10(
                 root=DATA_ROOT, train=train, transform=transform,
                 target_transform=None, download=True)
 

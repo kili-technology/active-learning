@@ -17,9 +17,14 @@ class ConvModel(nn.Module):
             nn.Conv2d(16, 16, 3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten(),
+        ])
+        self.fc = nn.Sequential(*[
             nn.Dropout(0.5),
             nn.Linear(7*7*16, classes)
         ])
 
-    def forward(self, x):
-        return self.conv(x)
+    def forward(self, x, features=False):
+        feature = self.conv(x)
+        if features:
+            return self.fc(feature), feature
+        return self.fc(feature)

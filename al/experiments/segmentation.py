@@ -23,16 +23,17 @@ def set_up_pascalvoc_segmentation(config, output_dir, logger, device=0, queries_
 
     logger.info(f'Dataset initial train size : {len(dataset.init_dataset)}')
     logger.info(f'Dataset used train size : {len(dataset.dataset)}')
-    logger.info(f'Dataset initial test size : {len(test_dataset.init_dataset)}')
+    logger.info(
+        f'Dataset initial test size : {len(test_dataset.init_dataset)}')
     logger.info(f'Dataset test size : {len(test_dataset.dataset)}')
 
     logger.info('Setting up models...')
 
     n_classes = dataset.dataset.dataset.n_classes
     model = get_model_config(config, n_classes)
-    learner = SemanticLearner(model=model, cfg=cfg, logger_name=logger_name, config=config, device=device)
+    learner = SemanticLearner(
+        model=model, cfg=cfg, logger_name=logger_name, config=config, device=device)
     return dataset, learner
-
 
 
 def get_model_config(config, n_classes):

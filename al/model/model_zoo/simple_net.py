@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 
+
 class simplenet(nn.Module):
     def __init__(self, classes=10, simpnet_name='simplenet'):
         super(simplenet, self).__init__()
@@ -34,79 +35,94 @@ class simplenet(nn.Module):
             except:
                 print('While copying the parameter named {}, whose dimensions in the model are'
                       ' {} and whose dimensions in the checkpoint are {}, ... Using Initial Params'.format(
-                    name, own_state[name].size(), param.size()))
+                          name, own_state[name].size(), param.size()))
 
-    def forward(self, x):
+    def forward(self, x, features=False):
         out = self.features(x)
-        #Global Max Pooling
-        out = F.max_pool2d(out, kernel_size=out.size()[2:]) 
+        # Global Max Pooling
+        out = F.max_pool2d(out, kernel_size=out.size()[2:])
         # out = F.dropout2d(out, 0.1, training=True)
         out = self.drp(out)
 
-        out = out.view(out.size(0), -1)
-        out = self.classifier(out)
+        feature = out.view(out.size(0), -1)
+        out = self.classifier(feature)
+        if self.features:
+            return out, feature
         return out
 
     def _make_layers(self):
 
         model = nn.Sequential(
-                             nn.Conv2d(1, 64, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(64, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
+            nn.Conv2d(1, 64, kernel_size=[3, 3],
+                      stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(64, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
 
-                             nn.Conv2d(64, 128, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=[3, 3],
+                      stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
 
-                             nn.Conv2d(128, 128, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=[
+                      3, 3], stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
 
-                             nn.Conv2d(128, 128, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
-
-
-                             nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1), ceil_mode=False),
-                             nn.Dropout2d(p=0.1),
-
-
-                             nn.Conv2d(128, 128, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
-
-                             nn.Conv2d(128, 128, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
-
-                             nn.Conv2d(128, 256, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(256, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=[
+                      3, 3], stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
 
 
-
-                             nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1), ceil_mode=False),
-                             nn.Dropout2d(p=0.1),
-
-
-                             nn.Conv2d(256, 256, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(256, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2),
+                         dilation=(1, 1), ceil_mode=False),
+            nn.Dropout2d(p=0.1),
 
 
-                             nn.Conv2d(256, 256, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(256, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=[
+                      3, 3], stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(128, 128, kernel_size=[
+                      3, 3], stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(128, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(128, 256, kernel_size=[
+                      3, 3], stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(256, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
 
 
-                             nn.Conv2d(256, 256, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1)),
-                             nn.BatchNorm2d(256, eps=1e-05, momentum=0.05, affine=True),
-                             nn.ReLU(inplace=True),
 
-                            )
+            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2),
+                         dilation=(1, 1), ceil_mode=False),
+            nn.Dropout2d(p=0.1),
+
+
+            nn.Conv2d(256, 256, kernel_size=[
+                      3, 3], stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(256, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
+
+
+            nn.Conv2d(256, 256, kernel_size=[
+                      3, 3], stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(256, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
+
+
+            nn.Conv2d(256, 256, kernel_size=[
+                      3, 3], stride=(1, 1), padding=(1, 1)),
+            nn.BatchNorm2d(256, eps=1e-05, momentum=0.05, affine=True),
+            nn.ReLU(inplace=True),
+
+        )
 
         for m in model.modules():
-          if isinstance(m, nn.Conv2d):
-            nn.init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
+            if isinstance(m, nn.Conv2d):
+                nn.init.xavier_uniform_(
+                    m.weight.data, gain=nn.init.calculate_gain('relu'))
 
         return model

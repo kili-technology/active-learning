@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-### FOR CIFAR
+# FOR CIFAR
 
 class LinearBottleNeck(nn.Module):
 
@@ -19,7 +19,8 @@ class LinearBottleNeck(nn.Module):
             nn.BatchNorm2d(in_channels * t),
             nn.ReLU6(inplace=True),
 
-            nn.Conv2d(in_channels * t, in_channels * t, 3, stride=stride, padding=1, groups=in_channels * t),
+            nn.Conv2d(in_channels * t, in_channels * t, 3,
+                      stride=stride, padding=1, groups=in_channels * t),
             nn.BatchNorm2d(in_channels * t),
             nn.ReLU6(inplace=True),
 
@@ -39,6 +40,7 @@ class LinearBottleNeck(nn.Module):
             residual += x
 
         return residual
+
 
 class MobileNetV2(nn.Module):
 
@@ -67,7 +69,7 @@ class MobileNetV2(nn.Module):
         self.dropout2 = nn.Dropout2d(0.5)
         self.conv2 = nn.Conv2d(1280, class_num, 1)
 
-    def forward(self, x):
+    def forward(self, x, features=False):
         x = self.pre(x)
         x = self.stage1(x)
         x = self.stage2(x)
@@ -78,11 +80,13 @@ class MobileNetV2(nn.Module):
         x = self.stage7(x)
         x = self.dropout1(x)
         x = self.conv1(x)
-        x = F.adaptive_avg_pool2d(x, 1)
-        x = self.dropout2(x)
+        feature = F.adaptive_avg_pool2d(x, 1)
+        x = self.dropout2(feature)
         x = self.conv2(x)
         x = x.view(x.size(0), -1)
-
+        if features:
+            feature = feature.view(feature.size(0), -1)
+            return x, feature
         return x
 
     def _make_stage(self, repeat, in_channels, out_channels, stride, t):
@@ -96,8 +100,9 @@ class MobileNetV2(nn.Module):
 
         return nn.Sequential(*layers)
 
+
 def mobilenet_v2(cfg):
-    return MobileNetV2()
+    return MobileNetV2(class_num=cfg['experiment']['size'])
 
 
 # def mobilenet_v2(cfg):
@@ -105,14 +110,15 @@ def mobilenet_v2(cfg):
 #     return model
 
 
-### FOR SSD BACKBONE
+# FOR SSD BACKBONE
 
 
 class ConvBNReLU(nn.Sequential):
     def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         padding = (kernel_size - 1) // 2
         super(ConvBNReLU, self).__init__(
-            nn.Conv2d(in_planes, out_planes, kernel_size, stride, padding, groups=groups, bias=False),
+            nn.Conv2d(in_planes, out_planes, kernel_size, stride,
+                      padding, groups=groups, bias=False),
             nn.BatchNorm2d(out_planes),
             nn.ReLU6(inplace=True)
         )
@@ -133,7 +139,8 @@ class InvertedResidual(nn.Module):
             layers.append(ConvBNReLU(inp, hidden_dim, kernel_size=1))
         layers.extend([
             # dw
-            ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
+            ConvBNReLU(hidden_dim, hidden_dim,
+                       stride=stride, groups=hidden_dim),
             # pw-linear
             nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
             nn.BatchNorm2d(oup),
@@ -180,10 +187,12 @@ class MobileNetV2Backbone(nn.Module):
             output_channel = int(c * width_mult)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(block(input_channel, output_channel, stride, expand_ratio=t))
+                features.append(
+                    block(input_channel, output_channel, stride, expand_ratio=t))
                 input_channel = output_channel
         # building last several layers
-        features.append(ConvBNReLU(input_channel, self.last_channel, kernel_size=1))
+        features.append(ConvBNReLU(
+            input_channel, self.last_channel, kernel_size=1))
         # make it nn.Sequential
         self.features = nn.Sequential(*features)
         self.extras = nn.ModuleList([

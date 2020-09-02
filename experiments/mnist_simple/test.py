@@ -33,16 +33,19 @@ setupper = set_up_learner(DATASET)
 config['active_learning']['output_dir'] = OUTPUT_DIR
 config['experiment']['logger_name'] = logger_name
 model_name = 'simple_cnn'
+config['experiment']['model'] = model_name
 
-strategies = ['random_sampling', 'margin_sampling']
-repeats = 2
+strategies = ['diverse_mini_batch_sampling',
+              'random_sampling', 'margin_sampling']
+repeats = 1
+
 score_data = {}
-config['active_learning']['assets_per_query'] = 20
-config['active_learning']['n_iter'] = 5
-config['active_learning']['init_size'] = 20
+config['active_learning']['assets_per_query'] = 100
+config['active_learning']['n_iter'] = 9
+config['active_learning']['init_size'] = 100
 
 config['train_parameters']['batch_size'] = 16
-config['train_parameters']['iterations'] = 100
+config['train_parameters']['iterations'] = 200
 
 
 for i in range(repeats):
@@ -50,12 +53,17 @@ for i in range(repeats):
     logger.info(f'--------ROUND OF TRAININGS NUMBER #{i+1}--------')
     logger.info('---------------------------')
     for strategy in strategies:
+        if strategy == 'diverse_mini_batch_sampling':
+            strategy_params = {'beta': 50}
+        else:
+            strategy_params = {}
         dataset, learner = setupper(
             config, OUTPUT_DIR, logger)
         logger.info('---------------------------')
         logger.info(f'----STRATEGY : {strategy}----')
         logger.info('---------------------------')
-        trainer = ActiveTrain(learner, dataset, strategy, logger_name)
+        trainer = ActiveTrain(learner, dataset, strategy,
+                              logger_name, strategy_params=strategy_params)
         scores = trainer.train(
             config['train_parameters'], **config['active_learning'])
         score_data[(strategy, i)] = scores

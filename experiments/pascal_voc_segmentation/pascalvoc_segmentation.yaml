@@ -1,7 +1,8 @@
 experiment:
-  strategies: ['semantic_entropy_sampling', 'random_sampling']
+  strategies: ['random_sampling', 'semantic_entropy_sampling']
   config_file: 'al/model/configs/unet.yaml'
   repeats: 1
+  save_results: True
 active_learning:
   assets_per_query: 200
   # assets_per_query: 20
