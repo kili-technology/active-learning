@@ -1,3 +1,7 @@
+"""
+Base class for active learning supporting datasets
+"""
+
 import os
 
 import numpy as np
@@ -7,6 +11,9 @@ from ..helpers.query_saver import save_to_csv
 
 
 class MaskDataset(Dataset):
+    """
+    Filters a torch dataset with a list of indices.
+    """
 
     def __init__(self, dataset, init_indices=[]):
         super().__init__()
@@ -21,6 +28,13 @@ class MaskDataset(Dataset):
 
 
 class ActiveDataset():
+    """
+    Base class for a dataset supporting active learning.
+
+    A child class should implement methods :
+      - `_get_initial_dataset` : initializes the dataset
+      - `get_dataset(indices)` : returns the initial dataset with selected indices
+    """
 
     def __init__(self, dataset, n_init=100, output_dir=None, queries_name='queries.txt'):
         self.dataset = dataset

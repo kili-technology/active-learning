@@ -1,3 +1,7 @@
+"""
+Adapted from https://github.com/google/active-learning/blob/master/sampling_methods/kcenter_greedy.py
+"""
+
 import numpy as np
 from sklearn.metrics import pairwise_distances
 

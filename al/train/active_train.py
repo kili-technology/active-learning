@@ -1,3 +1,7 @@
+"""
+Base class for training an active learner (see models/) and an active dataset (see dataset/)
+"""
+
 import os
 import logging
 
@@ -8,6 +12,9 @@ from ..helpers.time import timeit
 class ActiveTrain():
 
     def __init__(self, learner, dataset, method, logger_name=None, strategy_params={}):
+        """
+        Initializes a learner, a dataset, and a method (string)
+        """
         self.learner = learner
         self.dataset = dataset
         self.method = method
@@ -19,6 +26,14 @@ class ActiveTrain():
 
     @timeit
     def train_iter(self, *args, **kwargs):
+        """
+        Fit the learner on the labeled dataset
+
+        Parameters
+        ----------
+        - *args : given to the fit method of the learner
+        - **kwargs : given to the fit method of the learner
+        """
         labeled_dataset = self.dataset.get_labeled()
         size_labeled = len(labeled_dataset)
         self.logger.debug(f'Training on {size_labeled} samples...')
@@ -29,6 +44,13 @@ class ActiveTrain():
 
     @timeit
     def score(self, on_train=False, log_time={}):
+        """
+        Score the learner on the validation dataset of the dataset object.
+
+        Parameters
+        ----------
+        - on_train : bool. If True, the learner will also be evaluated on the training dataset.
+        """
         self.logger.debug(f'Scoring...')
         validation_dataset = self.dataset.get_validation_dataset()
         self.logger.debug(
@@ -48,6 +70,13 @@ class ActiveTrain():
 
     @timeit
     def add_to_labeled(self, n, log_time={}):
+        """
+        Active learning query. Selects which unlabeled samples to add to the training data.
+
+        Parameters
+        ----------
+        - n : int. Number of samples to select and add to the training dataset.
+        """
         self.logger.debug(f'Adding {n} samples to the dataset...')
         unlabeled_dataset = self.dataset.get_unlabeled()
         self.strategy = get_strategy(self.method, logger_name=self.logger_name,
@@ -69,6 +98,24 @@ class ActiveTrain():
 
     @timeit
     def active_iter(self, train_parameters, n_iter, assets_per_query, compute_score, score_on_train, output_dir, step, log_time={}):
+        """
+        Single active learning training iteration : fitting a model, computing score, and running the AL algorithm
+        on the unlabeled dataset to add samples to the labeled dataset.
+
+        Parameters
+        ----------
+        - train_parameters : dict. Parameters given to the fit method of the learner
+        - n_iter : int. Number of active learning training iterations
+        - assets_per_query : int. Number of samples the active learning algorithm queries in this iteration
+        - compute_score : bool. If True, computes score on validation dataset
+        - score_on_train : bool. If True, computes score on training dataset
+        - output_dir : str. Path to directory where possible outputs are written
+        - step : current iteration of the training.
+
+        Returns
+        -------
+        - scores : dict. Metrics and informations on the iteration.
+        """
         self.logger.info(f'Step number #{step}')
         self.logger.debug(f'Beginning training iteration...')
         train_parameters['log_time'] = log_time
@@ -87,6 +134,18 @@ class ActiveTrain():
         return scores
 
     def train(self, train_parameters, n_iter, assets_per_query=100, compute_score=True, score_on_train=False, output_dir='', *args, **kwargs):
+        """
+        Whole active learning training
+
+        Parameters
+        ----------
+        - train_parameters : dict. Parameters given to the fit method of the learner
+        - n_iter : int. Number of active learning training iterations
+        - assets_per_query : int. Number of samples the active learning algorithm queries in this iteration
+        - compute_score : bool. If True, computes score on validation dataset
+        - score_on_train : bool. If True, computes score on training dataset
+        - output_dir : str. Path to directory where possible outputs are written
+        """
         list_scores = []
         self.learner.val_batch_size = train_parameters.get(
             'val_batch_size', 256)
