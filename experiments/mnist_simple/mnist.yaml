@@ -1,8 +1,8 @@
 experiment:
-  strategies: ['random_sampling', 'bayesian_bald_sampling', 'bayesian_entropy_sampling', 'coreset', 'uncertainty_sampling', 'margin_sampling', 'entropy_sampling']
+  strategies: ['random_sampling', 'bayesian_bald_sampling', 'bayesian_entropy_sampling', 'coreset', 'uncertainty_sampling', 'margin_sampling', 'entropy_sampling', 'diverse_mini_batch_sampling', 'kl_divergence_sampling']
   # strategies: ['random_sampling', 'margin_sampling']
-  model: 'simplenet'
-  # model: 'simple_cnn'
+  # model: 'simplenet'
+  model: 'simple_cnn'
   repeats: 5
   save_results: True
 active_learning:
@@ -17,5 +17,5 @@ train_parameters:
   learning_rate: 0.003
   shuffle: True
 dataset:
-  train_size: 10000
+  train_size: 50000
   val_size: 10000

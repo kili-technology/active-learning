@@ -39,24 +39,55 @@ query_step = 0
 plot_size = 32
 indices = df.loc[query_step].values
 
-train_dataset = dataset.dataset
-tensor = torch.stack([
-    train_dataset[i][0].unsqueeze(0) for i in indices
-])[:plot_size]
 
-print(tensor.shape)
+if False:
+    train_dataset = dataset.dataset
+    tensor = torch.stack([
+        train_dataset[i][0].unsqueeze(0) for i in indices
+    ])[:plot_size]
 
+    print(tensor.shape)
 
-def show(img):
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)), interpolation='nearest')
+    def show(img):
+        npimg = img.numpy()
+        plt.imshow(np.transpose(npimg, (1, 2, 0)), interpolation='nearest')
 
+    plot_dir = os.path.join(os.path.dirname(__file__), 'figures')
+    plt.figure(figsize=(20, 10))
+    show(torchvision.utils.make_grid(tensor, nrow=8))
+    # plt.title("", fontsize=14)
+    plt.tight_layout()
+    plt.axis('off')
+    plt.show()
+    plt.savefig(os.path.join(plot_dir, 'samples.png'), dpi=200)
 
-plot_dir = os.path.join(os.path.dirname(__file__), 'figures')
-plt.figure(figsize=(20, 10))
-show(torchvision.utils.make_grid(tensor, nrow=8))
-# plt.title("", fontsize=14)
-plt.tight_layout()
-plt.axis('off')
-plt.show()
-plt.savefig(os.path.join(plot_dir, 'samples.png'), dpi=200)
+if True:
+    digit = 8
+    n = 2
+    train_dataset = dataset.dataset
+    for i in indices:
+        if train_dataset[i][1].numpy() == digit:
+            tensor = train_dataset[i][0]
+            break
+
+    k = 0
+    for i in range(len(train_dataset)):
+        if train_dataset[i][1].numpy() == digit:
+            if k == n:
+                clean_tensor = train_dataset[i][0]
+            k += 1
+
+    plot_dir = os.path.join(os.path.dirname(__file__), 'figures')
+    plt.figure(figsize=(20, 10))
+    plt.imshow(tensor.numpy(), cmap='gray')
+    plt.tight_layout()
+    plt.axis('off')
+    plt.show()
+    plt.savefig(os.path.join(plot_dir, 'digit_bad.png'), dpi=200)
+
+    plt.figure(figsize=(20, 10))
+    plt.imshow(clean_tensor.numpy(), cmap='gray')
+    plt.tight_layout()
+    plt.axis('off')
+    plt.show()
+    plt.savefig(os.path.join(plot_dir, 'digit_clean.png'), dpi=200)

@@ -11,10 +11,6 @@ class KCenterGreedyStrategy(Strategy):
         super().__init__()
         self.metric = metric
 
-    @timeit
-    def score_dataset(self, dataset, log_time={}):
-        return None
-
     def update_distances(self, cluster_centers, only_new=True, reset_dist=False):
         """Update min distances given cluster centers.
         Args:
@@ -77,10 +73,9 @@ class KCenterGreedyStrategy(Strategy):
 
     @timeit
     def return_top_indices(self, dataset, learner, top, log_time={}):
-        self.score_dataset(dataset, log_time=log_time)
         self.min_distances = None
         self.n_obs = len(dataset)
         self.already_selected = []
         inference_result = learner.inference(dataset)
-        self.features = inference_result['predictions']
+        self.features = inference_result['features']
         return self.select_batch_([], top)

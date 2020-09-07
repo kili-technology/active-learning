@@ -1,19 +1,19 @@
 experiment:
-  strategies: ['random_sampling', 'bayesian_bald_sampling', 'bayesian_entropy_sampling', 'coreset', 'margin_sampling', 'entropy_sampling']
-  model: 'mobilenet'
-  # model: 'nasnet'
+  strategies: ['kl_divergence_sampling', 'diverse_mini_batch_sampling', 'random_sampling', 'bayesian_bald_sampling', 'bayesian_entropy_sampling', 'coreset', 'margin_sampling', 'uncertainty_sampling', 'entropy_sampling']
+  # model: 'mobilenet'
+  model: 'nasnet'
   repeats: 3
   save_results: True
   size: 100
 active_learning:
   assets_per_query: 1000
-  n_iter: 30
+  n_iter: 19
   init_size: 5000
   compute_score: True
   score_on_train: True
 train_parameters:
   batch_size: 32
-  iterations: 1000
+  iterations: 2000
   learning_rate: 0.003
   shuffle: True
 dataset:
