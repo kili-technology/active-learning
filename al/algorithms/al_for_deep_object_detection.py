@@ -68,7 +68,7 @@ def compute_uncertainties_asset(detection, weighted=False, weights_parameters={}
     labels = detection['labels']
     probas = probas.detach().cpu().numpy()
     rev = np.sort(probas, axis=1)[:, ::-1]
-    v1_vs_2 = (1 - rev[:, 0] - rev[:, 1])**2
+    v1_vs_2 = (1 - (rev[:, 0] - rev[:, 1]))**2
     if weighted:
         predicted_class = int(np.argsort(probas, axis=1)[:, ::-1][0, 0])
         c2isize = weights_parameters['class_to_instance_size']
