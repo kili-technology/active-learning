@@ -1,0 +1,20 @@
+experiment:
+  strategies: ['random_sampling', 'margin_sampling']
+  model: 'simple_cnn'
+  repeats: 3
+  sizes: [50000, 20000, 10000, 6000, 4000, 2500, 1500, 1000]
+  save_results: True
+active_learning:
+  assets_per_query: 50
+  n_iter: 18
+  init_size: 100
+  compute_score: True
+  score_on_train: True
+train_parameters:
+  batch_size: 32
+  iterations: 200
+  learning_rate: 0.003
+  shuffle: True
+dataset:
+  train_size: 50000
+  val_size: 10000

@@ -7,10 +7,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-
 EXPERIMENT_NAME = 'mnist_simple'
-model_name = 'simplenet'
-# model_name = 'simple_cnn'
+# model_name = 'simplenet'
+model_name = 'simple_cnn'
 OUTPUT_DIR = f'experiments/{EXPERIMENT_NAME}/results'
 FIGURE_DIR = f'experiments/{EXPERIMENT_NAME}/figures'
 
@@ -26,9 +25,9 @@ for (strategy, experiment_number), scores_experiment in scores.items():
         step = step_result['step']
         data.append(
             {'strategy': strategy,
-            'experiment': experiment_number,
-            'step': step,
-            **val_step_result})
+             'experiment': experiment_number,
+             'step': step,
+             **val_step_result})
 
 df = pd.DataFrame(data)
 

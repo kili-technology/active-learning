@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from al.helpers.experiment import load_config
+from al.helpers.experiment import *
 from al.experiments import set_up_learner
 from al.helpers.logger import setup_logger
 
@@ -18,8 +18,9 @@ OUTPUT_DIR = f'{EXPERIMENT_NAME}/results'
 FIGURE_DIR = f'{EXPERIMENT_NAME}/figures'
 plot_dir = os.path.join(os.path.dirname(__file__), 'figures')
 
-analyze_results = True
+analyze_results = False
 analyze_queries = False
+analyze_sizes = True
 
 if analyze_queries:
     dataset = 'cifar'
@@ -119,3 +120,14 @@ if analyze_results:
     plt.ylabel('Loss')
     plt.show()
     plt.savefig(os.path.join(plot_dir, 'loss.png'))
+
+if analyze_sizes:
+    with open(f'{OUTPUT_DIR}/scores-{model_name}.pickle', 'rb') as f:
+        scores = pickle.load(f)
+    df = extract_df(scores)
+
+    df_random = extract_strategy(df, 'random_sampling')
+    df_al = extract_strategy(df, 'uncertainty_sampling')
+
+    plot_size_required(df_al, df_random, plot_dir, points=[
+        0.5, 0.6, 0.7, 0.8])

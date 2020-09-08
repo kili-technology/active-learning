@@ -6,6 +6,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+from al.helpers.experiment import *
 # 30 : 0.365
 # 20 : 0.303
 # 10 : 0.165
@@ -28,6 +30,7 @@ for (strategy, experiment_number), scores_experiment in scores.items():
     for step_result in scores_experiment:
         val_step_result = step_result['val']
         step = step_result['step']
+        print(val_step_result['metrics'].keys())
         data.append(
             {'strategy': strategy,
              'experiment': experiment_number,
@@ -36,8 +39,9 @@ for (strategy, experiment_number), scores_experiment in scores.items():
              **val_step_result['metrics']})
 
 df = pd.DataFrame(data)
+# df = extract_df(scores)
 
-print(df)
+print(df.columns)
 
 plot_dir = os.path.join(os.path.dirname(__file__), 'figures')
 

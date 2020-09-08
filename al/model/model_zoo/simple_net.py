@@ -37,7 +37,7 @@ class simplenet(nn.Module):
                       ' {} and whose dimensions in the checkpoint are {}, ... Using Initial Params'.format(
                           name, own_state[name].size(), param.size()))
 
-    def forward(self, x, features=False):
+    def forward(self, x, return_features=False):
         out = self.features(x)
         # Global Max Pooling
         out = F.max_pool2d(out, kernel_size=out.size()[2:])
@@ -46,7 +46,7 @@ class simplenet(nn.Module):
 
         feature = out.view(out.size(0), -1)
         out = self.classifier(feature)
-        if self.features:
+        if return_features:
             return out, feature
         return out
 

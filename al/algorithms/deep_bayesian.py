@@ -32,12 +32,12 @@ class BayesianKLDivergence(BayesianActiveLearning):
         stacked_probabilities = self.evaluate_dataset(
             dataset, learner, log_time=log_time)
         C, N, _ = stacked_probabilities.shape
-        probabilities = np.mean(stacked_probabilities, axis=0)
+        consensus_probabilities = np.mean(stacked_probabilities, axis=0)
         divergences = np.zeros((N, C))
         for i in range(N):
             for c in range(C):
                 probabilities_ic = stacked_probabilities[c, i]
-                probabilities_i = probabilities[i]
+                probabilities_i = consensus_probabilities[i]
                 divergences[i, c] = np.sum(
                     probabilities_ic * np.log(probabilities_ic/probabilities_i))
         return np.mean(divergences, axis=1)
@@ -63,6 +63,6 @@ class BayesianBALDStrategy(BayesianActiveLearning):
             np.sum(model_probabilities * np.log(model_probabilities), axis=1)
         stacked_probabilities = self.evaluate_dataset(
             dataset, learner, log_time=log_time)
-        average_entropies = np.mean(
+        average_entropies = - np.mean(
             np.sum(stacked_probabilities * np.log(stacked_probabilities), axis=2), axis=0)
         return model_entropies - average_entropies

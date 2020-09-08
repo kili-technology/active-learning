@@ -1,5 +1,5 @@
 experiment:
-  strategies: ['kl_divergence_sampling', 'diverse_mini_batch_sampling', 'random_sampling', 'bayesian_bald_sampling', 'bayesian_entropy_sampling', 'coreset', 'margin_sampling', 'uncertainty_sampling']
+  strategies: ['kl_divergence_sampling', 'diverse_mini_batch_sampling', 'random_sampling', 'bayesian_bald_sampling', 'coreset', 'margin_sampling', 'uncertainty_sampling']
   # model: 'mobilenet'
   model: 'nasnet'
   repeats: 3
