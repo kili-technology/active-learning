@@ -18,7 +18,13 @@ The repository is divided as follows :
 ## Get started
 
 ```
-git clone https://github.com/mDuval1/active-learning
+git clone https://github.com/kili-technology/active-learning
 cd active-learning
 pip install .
 ```
+
+As an example on how to use the library, check out `/experiments/siim-isic-melanoma-classification/` : this presents a use case on how to create a training pipeline.
+
+- In `data_processing.py`, an `ActiveDataset` dataset object is created, `MelanomaDataset`.
+- In `model.py`, an `ActiveModel` learner object is created, `SEResnext50_32x4dLearner`.
+- In `main.py`, those objects are combined in an `ActiveTrain` trainer object, together with an active learning algorithm.

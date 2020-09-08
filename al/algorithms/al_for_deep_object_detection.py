@@ -1,5 +1,8 @@
-# C. Brust, C. Käding and J. Denzler (2019) Active learning for deep object detection.
-# In VISAPP. https://arxiv.org/pdf/1809.09875.pdf
+"""
+C. Brust, C. Käding and J. Denzler (2019) Active learning for deep object detection.
+In VISAPP. https://arxiv.org/pdf/1809.09875.pdf
+"""
+
 import logging
 from collections import defaultdict
 

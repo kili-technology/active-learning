@@ -70,9 +70,6 @@ class SEResnext50_32x4dLearner(ActiveLearner):
         train_target_distrib = pd.value_counts(labeled_targets)
         self.logger.info('Targets labeled distribution :')
         self.logger.info(train_target_distrib)
-        # neg_over_pos = train_target_distrib[0] / train_target_distrib[1]
-        # self.logger.info(
-        #     f'Number of negative over positive : {neg_over_pos:.2f}')
 
         if self.cuda_available:
             self.model.cuda()
