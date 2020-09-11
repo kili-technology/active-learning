@@ -29,3 +29,5 @@ def get_strategy(strategy_name, **kwargs):
         return DiverseMiniBatchStrategy(**kwargs)
     elif strategy_name == 'kl_divergence_sampling':
         return BayesianKLDivergence(**kwargs)
+    elif strategy_name == 'semantic_min_entropy_sampling':
+        return SemanticMinEntropyStrategy(**kwargs)

@@ -38,7 +38,7 @@ class MnistLearner(ActiveLearner):
                     data = data[:, None, :, :]
                 if self.cuda_available:
                     data = data.cuda()
-                prediction, features = self.model(data, features=True)
+                prediction, features = self.model(data, True)
                 if self.cuda_available:
                     prediction = prediction.detach().cpu()
                     features = features.detach().cpu()

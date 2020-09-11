@@ -1,5 +1,6 @@
 experiment:
-  strategies: ['random_sampling', 'semantic_entropy_sampling']
+  # strategies: ['random_sampling', 'semantic_entropy_sampling']
+  strategies: ['semantic_min_entropy_sampling', 'random_sampling']
   config_file: 'al/model/configs/unet.yaml'
   repeats: 1
   save_results: True
@@ -13,7 +14,7 @@ active_learning:
 train_parameters:
   batch_size: 16
   val_batch_size: 32
-  iterations: 500
+  iterations: 3000
   # iterations: 5
   learning_rate: 1.0e-3
   shuffle: True

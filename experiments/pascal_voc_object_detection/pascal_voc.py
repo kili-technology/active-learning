@@ -41,7 +41,7 @@ for i in range(config['experiment']['repeats']):
     logger.info(f'--------ROUND OF TRAININGS NUMBER #{i+1}--------')
     logger.info('---------------------------')
     for strategy in config['experiment']['strategies']:
-        dataset, learner = setupper(config, OUTPUT_DIR, logger, device=1,
+        dataset, learner = setupper(config, OUTPUT_DIR, logger, device=0,
                                     queries_name=f'queries-{strategy}-{i}-{model_name}.txt')
         logger.info('---------------------------')
         logger.info(f'----STRATEGY : {strategy}----')

@@ -18,7 +18,7 @@ OUTPUT_DIR = f'{EXPERIMENT_NAME}/results'
 FIGURE_DIR = f'{EXPERIMENT_NAME}/figures'
 plot_dir = os.path.join(os.path.dirname(__file__), 'figures')
 
-analyze_results = False
+analyze_results = True
 analyze_queries = False
 analyze_sizes = True
 
@@ -104,20 +104,20 @@ if analyze_results:
 
     print(df)
 
-    df = df.loc[~df.strategy.isin(
-        ['coreset', 'margin_sampling', 'bayesian_bald_sampling'])]
+    # df = df.loc[~df.strategy.isin(
+    #     ['coreset', 'margin_sampling', 'bayesian_bald_sampling'])]
 
     plt.figure(num=0, figsize=(12, 5))
     sns.lineplot(x='step', y='accuracy', hue='strategy', data=df)
     plt.ylabel('Accuracy')
     plt.show()
-    plt.savefig(os.path.join(plot_dir, 'accuracy.png'))
+    plt.savefig(os.path.join(plot_dir, f'accuracy-{model_name}.png'), dpi=200)
 
     plt.figure(num=1, figsize=(12, 5))
     sns.lineplot(x='step', y='loss', hue='strategy', data=df)
     plt.ylabel('Loss')
     plt.show()
-    plt.savefig(os.path.join(plot_dir, 'loss.png'))
+    plt.savefig(os.path.join(plot_dir, f'loss-{model_name}.png'), dpi=200)
 
 if analyze_sizes:
     with open(f'{OUTPUT_DIR}/scores-{model_name}.pickle', 'rb') as f:
@@ -128,4 +128,4 @@ if analyze_sizes:
     df_al = extract_strategy(df, 'entropy_sampling')
 
     plot_size_required(df_al, df_random, plot_dir, points=[
-        0.2, 0.3, 0.4, 0.45])
+        0.2, 0.3, 0.4, 0.45], savename=f'size_ratio-{model_name}.png')

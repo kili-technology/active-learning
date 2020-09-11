@@ -85,4 +85,4 @@ def plot_size_required(df_with_al, df_without_al, plot_dir, points, perf_col='va
     ax.set_xlabel('Number of samples without al')
     plt.tight_layout()
     plt.show()
-    plt.savefig(os.path.join(plot_dir, f'{savename}.png'))
+    plt.savefig(os.path.join(plot_dir, f'{savename}.png'), dpi=200)

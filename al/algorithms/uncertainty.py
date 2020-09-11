@@ -60,3 +60,13 @@ class SemanticEntropyStrategy(BaseUncertaintyStrategy):
         probabilities = np.reshape(probabilities, (bs, -1))
         entropies = -np.sum(probabilities * np.log(probabilities), axis=1)
         return entropies
+
+
+class SemanticMinEntropyStrategy(BaseUncertaintyStrategy):
+    @timeit
+    def score_dataset(self, dataset, learner, log_time={}):
+        inference_result = learner.inference(dataset)
+        probabilities = inference_result['class_probabilities']
+        bs, _, _, _ = probabilities.shape
+        entropies = -np.sum(probabilities * np.log(probabilities), axis=3)
+        return np.mean(entropies, axis=(1, 2))

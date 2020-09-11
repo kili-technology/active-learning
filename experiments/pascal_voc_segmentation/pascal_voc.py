@@ -58,17 +58,3 @@ for i in range(config['experiment']['repeats']):
 if config['experiment']['save_results']:
     with open(f'{OUTPUT_DIR}/scores-{model_name}.pickle', 'wb') as f:
         pickle.dump(score_data, f)
-
-# logger.debug('Getting dataset and learner')
-# dataset, learner = setupper(config, OUTPUT_DIR, logger, device=0)
-# logger.debug('Getting trainer')
-# trainer = ActiveTrain(
-#     learner, dataset, config['experiment']['strategies'][1], logger_name)
-# logger.debug('Training...')
-
-# scores = trainer.train(config['train_parameters'], **config['active_learning'])
-# logger.debug('Done training...')
-
-# if config['experiment']['save_results']:
-#     with open(f'{OUTPUT_DIR}/scores.pickle', 'wb') as f:
-#         pickle.dump(scores, f)

@@ -1,9 +1,9 @@
 experiment:
-  strategies: ['random_sampling', 'bayesian_bald_sampling', 'bayesian_entropy_sampling', 'coreset', 'uncertainty_sampling', 'margin_sampling', 'entropy_sampling', 'diverse_mini_batch_sampling', 'kl_divergence_sampling']
+  strategies: ['bayesian_bald_sampling', 'random_sampling', 'bayesian_entropy_sampling', 'coreset', 'uncertainty_sampling', 'margin_sampling', 'entropy_sampling', 'diverse_mini_batch_sampling', 'kl_divergence_sampling']
   # strategies: ['random_sampling', 'margin_sampling']
   model: 'simplenet'
   # model: 'simple_cnn'
-  repeats: 5
+  repeats: 2
   save_results: True
 active_learning:
   assets_per_query: 50
